@@ -3,6 +3,9 @@ defmodule Forklift.Application do
 
   use Application
 
+  def redis_client(), do: :redix
+  def mongo_connection(), do: :forklift_mongo_connection
+
   def start(_type, _args) do
     Forklift.MetricsExporter.setup()
 
@@ -10,6 +13,7 @@ defmodule Forklift.Application do
       [
         libcluster(),
         redis(),
+        mongo(),
         metrics(),
         {DynamicSupervisor, strategy: :one_for_one, name: Forklift.Dynamic.Supervisor},
         migrations(),
@@ -24,12 +28,17 @@ defmodule Forklift.Application do
     Supervisor.start_link(children, opts)
   end
 
-  def redis_client(), do: :redix
-
   defp redis do
     case Application.get_env(:redix, :host) do
       nil -> []
       host -> {Redix, host: host, name: redis_client()}
+    end
+  end
+
+  defp mongo do
+    case Application.get_env(:forklift, :mongo) do
+      nil -> []
+      config -> {Mongo, Keyword.put(config, :name, mongo_connection())}
     end
   end
 

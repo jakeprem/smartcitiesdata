@@ -61,6 +61,13 @@ config :forklift, :dead_letter,
     ]
   ]
 
+config :forklift, :mongo,
+  hostname: host,
+  username: "root",
+  password: "password",
+  auth_source: "admin",
+  database: "presto"
+
 config :prestige,
   base_url: "http://#{host}:8080",
   headers: [

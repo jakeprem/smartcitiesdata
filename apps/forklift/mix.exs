@@ -57,7 +57,8 @@ defmodule Forklift.MixProject do
       {:distillery, "~> 2.1"},
       {:tasks, in_umbrella: true, only: :dev},
       {:pipeline, in_umbrella: true},
-      {:mox, "~> 0.5.1", only: [:dev, :test, :integration]}
+      {:mox, "~> 0.5.1", only: [:dev, :test, :integration]},
+      {:mongodb_driver, "~> 0.6.0"}
     ]
   end
 

@@ -47,7 +47,7 @@ services:
     depends_on:
     - metastore
     - minio
-    image: smartcitiesdata/presto-testo:development
+    image: presto-testo:local
     ports:
     - "8080:8080"
     healthcheck:
@@ -59,3 +59,11 @@ services:
     image: redis:latest
     ports:
       - "6379:6379"
+  mongodb:
+    image: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
