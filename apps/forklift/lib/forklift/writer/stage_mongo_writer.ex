@@ -11,7 +11,6 @@ defmodule Forklift.Writer.StageMongoWriter do
   @mongo_conn Forklift.Application.mongo_connection()
 
   def init(args) do
-    # write document to _schema, upsert? or overwrite?
     %{id: dataset_id, technical: %{systemName: name, schema: schema}} = Keyword.fetch!(args, :dataset)
 
     fields =
@@ -25,16 +24,30 @@ defmodule Forklift.Writer.StageMongoWriter do
   end
 
   def write(data, opts) do
-    dataset_id = Keyword.fetch!(opts, :dataset_id)
-    payloads = Enum.map(data, &Map.get(&1, :payload))
+    %{technical: %{systemName: system_name}} = Keyword.fetch!(opts, :dataset)
+    payloads =
+      Enum.map(data, &Map.get(&1, :payload))
+      |> Enum.map(&convert_payload/1)
 
-    # have to write logic to convert all dates and date_times to strings
+    Mongo.insert_many(@mongo_conn, system_name, payloads)
 
-    Mongo.insert_many(:mongo, dataset_id, payloads)
     :ok
   end
 
   defp update_schema(table, fields) do
     Mongo.find_one_and_replace(@mongo_conn, "_schema", %{"table" => table}, %{"table" => table, "fields" => fields}, upsert: true)
   end
+
+  defp convert_payload(payload) do
+    Enum.map(payload, fn {key, value} -> {key, convert_value(value)} end)
+    |> Map.new()
+  end
+
+  defp convert_value(%Date{} = date) do
+    with {:ok, naive_date_time} <- NaiveDateTime.new(date.year, date.month, date.day, 0, 0, 0) do
+      DateTime.from_naive!(naive_date_time, "Etc/UTC")
+    end
+  end
+
+  defp convert_value(value), do: value
 end

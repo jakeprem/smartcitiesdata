@@ -1,6 +1,7 @@
 defmodule Forklift.Writer.StageMongoWriterTest do
   use ExUnit.Case
   use Divo
+  import Checkov
 
   alias Forklift.Writer.StageMongoWriter
   alias SmartCity.TestDataGenerator, as: TDG
@@ -50,8 +51,6 @@ defmodule Forklift.Writer.StageMongoWriterTest do
 
       assert :ok == StageMongoWriter.init(dataset: dataset)
 
-      Mongo.find(@mongo_conn, "_schema", %{}) |> Enum.to_list |> IO.inspect(label: "mongo _schema")
-
       expected = [
         %{"Column" => "name", "Comment" => "", "Extra" => "", "Type" => "varchar"},
         %{"Column" => "age", "Comment" => "", "Extra" => "", "Type" => "integer"}
@@ -60,6 +59,35 @@ defmodule Forklift.Writer.StageMongoWriterTest do
       with_table_definition("mongodb.presto.#{system_name}", fn table ->
         assert table == expected
       end)
+    end
+  end
+
+  describe "write/2" do
+    data_test "writes all data to mongo" do
+      schema = [
+        %{name: "id", type: "integer"},
+        %{name: "name", type: "string"},
+        %{name: "age", type: "integer"},
+        %{name: "birthdate", type: type}
+      ]
+      dataset = TDG.create_dataset(id: "ds1", technical: %{systemName: "org_dataset", schema: schema})
+
+      assert :ok == StageMongoWriter.init(dataset: dataset)
+
+      data = [
+        TDG.create_data(dataset_id: "ds1", payload: %{"id" => id, "name" => "joe", "age" => 21, "birthdate" => value})
+      ]
+
+      assert :ok == StageMongoWriter.write(data, dataset: dataset)
+
+      rows = Prestige.execute("select * from mongodb.presto.org_dataset where id = #{id}", rows_as_maps: true) |> Prestige.prefetch()
+
+      assert [%{"id" => id, "name" => "joe", "age" => 21, "birthdate" => result}] == rows
+
+      where [
+        [:id, :type, :value, :result],
+        [1, "date", DateTime.to_iso8601(DateTime.utc_now()), Date.to_iso8601(Date.utc_today())]
+      ]
     end
   end
 
