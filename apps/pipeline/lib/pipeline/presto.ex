@@ -10,6 +10,11 @@ defmodule Pipeline.Presto do
     defexception message: "Encountered an unsupported field type"
   end
 
+  defmodule InvalidSchemaError do
+    @moduledoc false
+    defexception message: "Invalid Schema"
+  end
+
   def create(%{table: name, as: select}) do
     {:ok, "create table #{name} as (#{select})"}
   end
@@ -39,5 +44,4 @@ defmodule Pipeline.Presto do
   end
 
   defdelegate convert_type(field), to: Pipeline.Presto.Types, as: :convert
-
 end

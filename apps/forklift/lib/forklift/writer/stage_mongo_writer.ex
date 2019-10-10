@@ -1,8 +1,9 @@
 defmodule Forklift.Writer.StageMongoWriter do
   @moduledoc "TODO"
   require Logger
-  alias Pipeline.Writer.TableWriter.Statement.Create
   @behaviour Pipeline.Writer
+
+  alias Pipeline.Presto
 
   @table_writer Application.get_env(:forklift, Forklift.StageWriter, [])
                 |> Keyword.get(:table_writer, Pipeline.Writer.TableWriter)
@@ -15,11 +16,10 @@ defmodule Forklift.Writer.StageMongoWriter do
 
     fields =
       schema
-      |> Enum.map(fn field -> {field, Create.translate_column(field)} end)
-      |> Enum.map(fn {field, presto_column} -> {field, String.split(presto_column, " ", parts: 2) |> Enum.at(1)} end)
-      |> Enum.map(fn {field, presto_type} -> %{"name" => field.name, "type" => presto_type, "hidden" => false} end)
+      |> Enum.map(&Presto.convert_type/1)
+      |> Enum.map(fn %{column_name: name, data_type: type} -> %{"name" => name, "type" => type, "hidden" => false} end)
 
-    with {:ok, _result} <- Mongo.insert_one(@mongo_conn, "_schema", %{"table" => name, "fields" => fields}) do
+    with {:ok, _result} <- update_schema(name, fields) do
       :ok
     end
   end
@@ -32,5 +32,9 @@ defmodule Forklift.Writer.StageMongoWriter do
 
     Mongo.insert_many(:mongo, dataset_id, payloads)
     :ok
+  end
+
+  defp update_schema(table, fields) do
+    Mongo.find_one_and_replace(@mongo_conn, "_schema", %{"table" => table}, %{"table" => table, "fields" => fields}, upsert: true)
   end
 end

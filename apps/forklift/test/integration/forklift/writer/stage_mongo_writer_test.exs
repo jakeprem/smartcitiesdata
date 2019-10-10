@@ -4,7 +4,7 @@ defmodule Forklift.Writer.StageMongoWriterTest do
 
   alias Forklift.Writer.StageMongoWriter
   alias SmartCity.TestDataGenerator, as: TDG
-  import SmartCity.TestHelper, only: [eventually: 1]
+  import SmartCity.TestHelper, only: [eventually: 3]
 
   @mongo_conn Forklift.Application.mongo_connection()
 
@@ -26,14 +26,51 @@ defmodule Forklift.Writer.StageMongoWriterTest do
         %{"Column" => "four", "Comment" => "", "Extra" => "", "Type" => "array(row(five integer))"}
       ]
 
-      eventually(fn ->
-        table =
-          "describe mongodb.presto.org_name__dataset_name"
-          |> Prestige.execute(rows_as_maps: true)
-          |> Prestige.prefetch()
-
+      with_table_definition("mongodb.presto.org_name__dataset_name", fn table ->
         assert table == expected
       end)
     end
+
+    test "update existing _schema document if one already exists" do
+      system_name = "org_name__dataset_name_2"
+      schema = [
+        %{name: "name", type: "string"}
+      ]
+
+      dataset = TDG.create_dataset(id: "ds1", technical: %{systemName: system_name, schema: schema})
+
+      assert :ok == StageMongoWriter.init(dataset: dataset)
+
+      schema = [
+        %{name: "name", type: "string"},
+        %{name: "age", type: "integer"}
+      ]
+
+      dataset = TDG.create_dataset(id: "ds1", technical: %{systemName: system_name, schema: schema})
+
+      assert :ok == StageMongoWriter.init(dataset: dataset)
+
+      Mongo.find(@mongo_conn, "_schema", %{}) |> Enum.to_list |> IO.inspect(label: "mongo _schema")
+
+      expected = [
+        %{"Column" => "name", "Comment" => "", "Extra" => "", "Type" => "varchar"},
+        %{"Column" => "age", "Comment" => "", "Extra" => "", "Type" => "integer"}
+      ]
+
+      with_table_definition("mongodb.presto.#{system_name}", fn table ->
+        assert table == expected
+      end)
+    end
+  end
+
+  defp with_table_definition(table, function) when is_function(function, 1) do
+    eventually(fn ->
+      table_def =
+        "describe #{table}"
+        |> Prestige.execute(rows_as_maps: true)
+        |> Prestige.prefetch()
+
+      function.(table_def)
+    end, 1_000, 30)
   end
 end

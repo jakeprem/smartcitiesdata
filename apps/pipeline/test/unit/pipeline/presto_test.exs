@@ -88,7 +88,9 @@ defmodule Pipeline.PrestoTest do
     @tag capture_log: true
     test "returns error tuple when given invalid schema" do
       schema = [%{name: "my_field"}]
-      expected = "Unable to parse schema: %KeyError{key: :type, message: nil, term: %{name: \"my_field\"}}"
+      expected =
+        "Unable to parse schema: %Pipeline.Presto.InvalidSchemaError{message: \"Invalid Schema: field %{name: \\\"my_field\\\"}\"}"
+
       assert {:error, ^expected} = Presto.create(%{table: "table_name", schema: schema})
     end
 
@@ -470,9 +472,9 @@ defmodule Pipeline.PrestoTest do
 
   describe "convert_type/1" do
     data_test "convert simple type #{type} to #{result}" do
-      assert result == Presto.convert_type(%{type: type})
+      assert %{column_name: "name", data_type: result} == Presto.convert_type(%{name: "name", type: type})
 
-      where [
+      where([
         [:type, :result],
         ["string", "varchar"],
         ["boolean", "boolean"],
@@ -482,14 +484,16 @@ defmodule Pipeline.PrestoTest do
         ["integer", "integer"],
         ["long", "bigint"],
         ["json", "varchar"],
-        ["timestamp", "timestamp"]
-      ]
+        ["timestamp", "timestamp"],
+        ["decimal(18,3)", "decimal(18,3)"]
+      ])
     end
 
     data_test "converts list of #{type} to array(#{type})" do
-      assert "array(#{result})" == Presto.convert_type(%{type: "list", itemType: type})
+      assert %{column_name: "name", data_type: "array(#{result})"} ==
+               Presto.convert_type(%{name: "name", type: "list", itemType: type})
 
-      where [
+      where([
         [:type, :result],
         ["string", "varchar"],
         ["boolean", "boolean"],
@@ -500,9 +504,42 @@ defmodule Pipeline.PrestoTest do
         ["long", "bigint"],
         ["json", "varchar"],
         ["timestamp", "timestamp"]
-      ]
+      ])
     end
 
+    test "converts map to row type" do
+      field = %{
+        name: "map",
+        type: "map",
+        subSchema: [
+          %{name: "name", type: "string"},
+          %{name: "age", type: "integer"}
+        ]
+      }
+
+      assert %{column_name: "map", data_type: ~s|row("name" varchar, "age" integer)|} == Presto.convert_type(field)
+    end
+
+    test "converts to list of map to array(row)" do
+      field = %{
+        name: "list_of_maps",
+        type: "list",
+        itemType: "map",
+        subSchema: [
+          %{name: "name", type: "string"},
+          %{name: "age", type: "integer"}
+        ]
+      }
+
+      assert %{column_name: "list_of_maps", data_type: ~s|array(row("name" varchar, "age" integer))|} ==
+               Presto.convert_type(field)
+    end
+
+    test "raises exception when unable to convert field" do
+      assert_raise Presto.FieldTypeError, "invalid Type is not supported", fn ->
+        Presto.convert_type(%{name: "invalid", type: "invalid"})
+      end
+    end
   end
 
   defp config(schema \\ [%{name: "id", type: "integer"}, %{name: "name", type: "string"}]) do

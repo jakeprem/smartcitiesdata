@@ -13,13 +13,8 @@ defmodule Pipeline.Writer.TableWriter.Compaction do
   end
 
   def run(table) do
-<<<<<<< HEAD
     %{table: "#{table}_compact", as: "select * from #{table}"}
-    |> Statement.create()
-=======
-    %{name: "#{table}_compact", as: "select * from #{table}"}
     |> Presto.create()
->>>>>>> Refactoring presto logic out of table writer namespace
     |> elem(1)
     |> execute_async()
   end
