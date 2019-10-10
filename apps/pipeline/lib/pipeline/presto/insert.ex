@@ -1,4 +1,4 @@
-defmodule Pipeline.Writer.TableWriter.Statement.Insert do
+defmodule Pipeline.Presto.Insert do
   @moduledoc false
 
   require Logger

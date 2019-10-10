@@ -4,7 +4,8 @@ defmodule Pipeline.Writer.TableWriter do
   """
 
   @behaviour Pipeline.Writer
-  alias Pipeline.Writer.TableWriter.{Compaction, Statement}
+  alias Pipeline.Writer.TableWriter.Compaction
+  alias Pipeline.Presto
   require Logger
 
   @type schema() :: [map()]
@@ -17,7 +18,7 @@ defmodule Pipeline.Writer.TableWriter do
   def init(args) do
     config = parse_args(args)
 
-    with {:ok, statement} <- Statement.create(config),
+    with {:ok, statement} <- Presto.create(config),
          [[true]] <- execute(statement) do
       Logger.info("Created #{config.table} table")
       :ok
@@ -43,7 +44,7 @@ defmodule Pipeline.Writer.TableWriter do
     payloads = Enum.map(content, &Map.get(&1, :payload))
 
     parse_args(config)
-    |> Statement.insert(payloads)
+    |> Presto.insert(payloads)
     |> execute()
     |> case do
       [[_]] -> :ok

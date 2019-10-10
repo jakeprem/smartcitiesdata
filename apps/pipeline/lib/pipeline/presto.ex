@@ -1,7 +1,7 @@
-defmodule Pipeline.Writer.TableWriter.Statement do
+defmodule Pipeline.Presto do
   @moduledoc false
 
-  alias Pipeline.Writer.TableWriter.Statement.{Create, Insert}
+  alias Pipeline.Presto.{Create, Insert}
 
   require Logger
 
@@ -37,4 +37,7 @@ defmodule Pipeline.Writer.TableWriter.Statement do
   def alter(%{table: table, alteration: change}) do
     "alter table #{table} #{change}"
   end
+
+  defdelegate convert_type(field), to: Pipeline.Presto.Types, as: :convert
+
 end

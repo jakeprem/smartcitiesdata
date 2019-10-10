@@ -1,8 +1,9 @@
-defmodule Pipeline.Writer.TableWriter.StatementTest do
+defmodule Pipeline.PrestoTest do
   use ExUnit.Case
   use Placebo
+  import Checkov
 
-  alias Pipeline.Writer.TableWriter.Statement
+  alias Pipeline.Presto
 
   describe "create/1" do
     @tag capture_log: true
@@ -18,7 +19,7 @@ defmodule Pipeline.Writer.TableWriter.StatementTest do
       expected =
         ~s|CREATE TABLE IF NOT EXISTS table_name ("first_name" varchar, "height" bigint, "weight" double, "identifier" decimal, "payload" varchar)|
 
-      assert {:ok, ^expected} = Statement.create(%{table: "table_name", schema: schema})
+      assert {:ok, ^expected} = Presto.create(%{table: "table_name", schema: schema})
     end
 
     @tag capture_log: true
@@ -44,7 +45,7 @@ defmodule Pipeline.Writer.TableWriter.StatementTest do
       expected =
         ~s|CREATE TABLE IF NOT EXISTS table_name ("spouse" row("first_name" varchar, "next_of_kin" row("first_name" varchar, "date_of_birth" date)))|
 
-      assert {:ok, ^expected} = Statement.create(%{table: "table_name", schema: schema})
+      assert {:ok, ^expected} = Presto.create(%{table: "table_name", schema: schema})
     end
 
     @tag capture_log: true
@@ -54,7 +55,7 @@ defmodule Pipeline.Writer.TableWriter.StatementTest do
       ]
 
       expected = ~s|CREATE TABLE IF NOT EXISTS table_name ("friend_names" array(varchar))|
-      assert {:ok, ^expected} = Statement.create(%{table: "table_name", schema: schema})
+      assert {:ok, ^expected} = Presto.create(%{table: "table_name", schema: schema})
     end
 
     @tag capture_log: true
@@ -74,26 +75,26 @@ defmodule Pipeline.Writer.TableWriter.StatementTest do
       expected =
         ~s|CREATE TABLE IF NOT EXISTS table_name ("friend_groups" array(row("first_name" varchar, "last_name" varchar)))|
 
-      assert {:ok, ^expected} = Statement.create(%{table: "table_name", schema: schema})
+      assert {:ok, ^expected} = Presto.create(%{table: "table_name", schema: schema})
     end
 
     @tag capture_log: true
     test "returns error tuple with type message when field cannot be mapped" do
       schema = [%{name: "my_field", type: "unsupported"}]
       expected = "unsupported Type is not supported"
-      assert {:error, ^expected} = Statement.create(%{table: "table_name", schema: schema})
+      assert {:error, ^expected} = Presto.create(%{table: "table_name", schema: schema})
     end
 
     @tag capture_log: true
     test "returns error tuple when given invalid schema" do
       schema = [%{name: "my_field"}]
       expected = "Unable to parse schema: %KeyError{key: :type, message: nil, term: %{name: \"my_field\"}}"
-      assert {:error, ^expected} = Statement.create(%{table: "table_name", schema: schema})
+      assert {:error, ^expected} = Presto.create(%{table: "table_name", schema: schema})
     end
 
     test "accepts a select statement to create table from" do
       expected = "create table one__two as (select * from three__four)"
-      assert {:ok, ^expected} = Statement.create(%{table: "one__two", as: "select * from three__four"})
+      assert {:ok, ^expected} = Presto.create(%{table: "one__two", as: "select * from three__four"})
     end
   end
 
@@ -105,7 +106,7 @@ defmodule Pipeline.Writer.TableWriter.StatementTest do
         %{"id" => 3, "name" => "Hred"}
       ]
 
-      result = Statement.insert(config(), data)
+      result = Presto.insert(config(), data)
       expected_result = ~s/insert into "rivers" ("id","name") values row(1,'Fred'),row(2,'Gred'),row(3,'Hred')/
       assert result == expected_result
     end
@@ -119,7 +120,7 @@ defmodule Pipeline.Writer.TableWriter.StatementTest do
         %{"name" => "Yom", "id" => 7}
       ]
 
-      result = Statement.insert(schema, data)
+      result = Presto.insert(schema, data)
       expected_result = ~s/insert into "rivers" ("id","name") values row(9,'Iom'),row(8,'Jom'),row(7,'Yom')/
 
       assert result == expected_result
@@ -130,7 +131,7 @@ defmodule Pipeline.Writer.TableWriter.StatementTest do
         %{"id" => 9, "name" => "Nathaniel's test"}
       ]
 
-      result = Statement.insert(config(), data)
+      result = Presto.insert(config(), data)
       expected_result = ~s/insert into "rivers" ("id","name") values row(9,'Nathaniel''s test')/
 
       assert result == expected_result
@@ -141,7 +142,7 @@ defmodule Pipeline.Writer.TableWriter.StatementTest do
         %{"id" => 9, "name" => nil}
       ]
 
-      result = Statement.insert(config(), data)
+      result = Presto.insert(config(), data)
       expected_result = ~s/insert into "rivers" ("id","name") values row(9,null)/
 
       assert result == expected_result
@@ -151,7 +152,7 @@ defmodule Pipeline.Writer.TableWriter.StatementTest do
       dataset = config([%{name: "id", type: "integer"}, %{name: "date", type: "timestamp"}])
       data = [%{"id" => 9, "date" => ""}]
 
-      result = Statement.insert(dataset, data)
+      result = Presto.insert(dataset, data)
       expected_result = ~s/insert into "rivers" ("id","date") values row(9,null)/
 
       assert result == expected_result
@@ -161,7 +162,7 @@ defmodule Pipeline.Writer.TableWriter.StatementTest do
       dataset = config([%{name: "id", type: "number"}, %{name: "start_date", type: "date"}])
       data = [%{"id" => 9, "start_date" => "1900-01-01T00:00:00"}]
 
-      result = Statement.insert(dataset, data)
+      result = Presto.insert(dataset, data)
 
       expected_result =
         ~s/insert into "rivers" ("id","start_date") values row(9,date(date_parse('1900-01-01T00:00:00', '%Y-%m-%dT%H:%i:%S')))/
@@ -175,7 +176,7 @@ defmodule Pipeline.Writer.TableWriter.StatementTest do
         %{"id" => "-1", "name" => "Doki"}
       ]
 
-      result = Statement.insert(config(), data)
+      result = Presto.insert(config(), data)
       expected_result = ~s/insert into "rivers" ("id","name") values row(1,'Hroki'),row(-1,'Doki')/
 
       assert result == expected_result
@@ -185,7 +186,7 @@ defmodule Pipeline.Writer.TableWriter.StatementTest do
       dataset = config([%{name: "id", type: "integer"}, %{name: "floater", type: "float"}])
       data = [%{"id" => "1", "floater" => "+4.5"}, %{"id" => "1", "floater" => "-4.5"}]
 
-      result = Statement.insert(dataset, data)
+      result = Presto.insert(dataset, data)
       expected_result = ~s/insert into "rivers" ("id","floater") values row(1,4.5),row(1,-4.5)/
 
       assert result == expected_result
@@ -195,7 +196,7 @@ defmodule Pipeline.Writer.TableWriter.StatementTest do
       dataset = config([%{name: "id", type: "number"}, %{name: "start_time", type: "timestamp"}])
       data = [%{"id" => 9, "start_time" => "2019-04-17T14:23:09.030939"}]
 
-      result = Statement.insert(dataset, data)
+      result = Presto.insert(dataset, data)
 
       expected_result =
         ~s/insert into "rivers" ("id","start_time") values row(9,date_parse('2019-04-17T14:23:09.030939', '%Y-%m-%dT%H:%i:%S.%f'))/
@@ -207,7 +208,7 @@ defmodule Pipeline.Writer.TableWriter.StatementTest do
       dataset = config([%{name: "id", type: "number"}, %{name: "start_time", type: "timestamp"}])
       data = [%{"id" => 9, "start_time" => "2019-06-02T16:30:17"}]
 
-      result = Statement.insert(dataset, data)
+      result = Presto.insert(dataset, data)
 
       expected_result =
         ~s/insert into "rivers" ("id","start_time") values row(9,date_parse('2019-06-02T16:30:17', '%Y-%m-%dT%H:%i:%S'))/
@@ -219,7 +220,7 @@ defmodule Pipeline.Writer.TableWriter.StatementTest do
       dataset = config([%{name: "id", type: "number"}, %{name: "start_time", type: "timestamp"}])
       data = [%{"id" => 9, "start_time" => "2019-06-11T18:34:33.484840Z"}]
 
-      result = Statement.insert(dataset, data)
+      result = Presto.insert(dataset, data)
 
       expected_result =
         ~s/insert into "rivers" ("id","start_time") values row(9,date_parse('2019-06-11T18:34:33.484840Z', '%Y-%m-%dT%H:%i:%S.%fZ'))/
@@ -231,7 +232,7 @@ defmodule Pipeline.Writer.TableWriter.StatementTest do
       dataset = config([%{name: "id", type: "number"}, %{name: "start_time", type: "timestamp"}])
       data = [%{"id" => 9, "start_time" => "2019-06-14T18:16:32Z"}]
 
-      result = Statement.insert(dataset, data)
+      result = Presto.insert(dataset, data)
 
       expected_result =
         ~s/insert into "rivers" ("id","start_time") values row(9,date_parse('2019-06-14T18:16:32Z', '%Y-%m-%dT%H:%i:%SZ'))/
@@ -243,7 +244,7 @@ defmodule Pipeline.Writer.TableWriter.StatementTest do
       dataset = config([%{name: "id", type: "number"}, %{name: "start_time", type: "time"}])
       data = [%{"id" => 9, "start_time" => "23:00:13.001"}]
 
-      result = Statement.insert(dataset, data)
+      result = Presto.insert(dataset, data)
       expected_result = ~s/insert into "rivers" ("id","start_time") values row(9,'23:00:13.001')/
 
       assert result == expected_result
@@ -256,7 +257,7 @@ defmodule Pipeline.Writer.TableWriter.StatementTest do
         %{"id" => 3, "name" => ""}
       ]
 
-      result = Statement.insert(config(), data)
+      result = Presto.insert(config(), data)
       expected_result = ~s/insert into "rivers" ("id","name") values row(1,'Fred'),row(2,'Gred'),row(3,'')/
 
       assert result == expected_result
@@ -271,7 +272,7 @@ defmodule Pipeline.Writer.TableWriter.StatementTest do
         }
       ]
 
-      result = Statement.insert(get_json_schema(), data)
+      result = Presto.insert(get_json_schema(), data)
 
       expected_result =
         ~s/insert into "rivers" ("id","name","payload") values row(1,'Fred','{\"parent\":{\"children\":[[-35.123,123.456]],\"id\":\"daID\"}}')/
@@ -288,7 +289,7 @@ defmodule Pipeline.Writer.TableWriter.StatementTest do
         }
       ]
 
-      result = Statement.insert(get_json_schema(), data)
+      result = Presto.insert(get_json_schema(), data)
 
       expected_result =
         ~s|insert into "rivers" ("id","name","payload") values row(1,'Fred','{\"parent\":{\"children\":[[-35.123,123.456]],\"id\":\"daID\", \"name\": \"Chiggin''s\"}}')|
@@ -299,7 +300,7 @@ defmodule Pipeline.Writer.TableWriter.StatementTest do
     test "treats empty string as varchar" do
       data = [%{"id" => 1, "name" => "Fred", "payload" => ""}]
 
-      result = Statement.insert(get_json_schema(), data)
+      result = Presto.insert(get_json_schema(), data)
       expected_result = ~s/insert into "rivers" ("id","name","payload") values row(1,'Fred','')/
 
       assert result == expected_result
@@ -307,7 +308,7 @@ defmodule Pipeline.Writer.TableWriter.StatementTest do
 
     test "build generates a valid statement when given a complex nested schema and complex nested data" do
       nested_data = get_complex_nested_data()
-      result = Statement.insert(get_complex_nested_schema(), nested_data)
+      result = Presto.insert(get_complex_nested_schema(), nested_data)
 
       expected_result =
         ~s|insert into "rivers" ("first_name","age","friend_names","friends","spouse") values row('Joe',10,array['bob','sally'],array[row('Bill','Bunco'),row('Sally','Bosco')],row('Susan','female',row('Joel','12/07/1941')))|
@@ -335,7 +336,7 @@ defmodule Pipeline.Writer.TableWriter.StatementTest do
         %{"first_name" => "Rob", "spouse" => %{"first_name" => "Freda"}}
       ]
 
-      result = Statement.insert(dataset, data)
+      result = Presto.insert(dataset, data)
 
       expected_result =
         ~s|insert into "rivers" ("first_name","spouse") values row('Bob',row('Hred')),row('Rob',row('Freda'))|
@@ -385,7 +386,7 @@ defmodule Pipeline.Writer.TableWriter.StatementTest do
         }
       ]
 
-      result = Statement.insert(dataset, data)
+      result = Presto.insert(dataset, data)
 
       expected_result =
         ~s|insert into "rivers" ("spouse") values row(row('Georgia',row('Bimmy','01/01/1900'))),row(row('Regina',row('Jammy','01/01/1901')))|
@@ -397,7 +398,7 @@ defmodule Pipeline.Writer.TableWriter.StatementTest do
       dataset = config([%{name: "friend_names", type: "list", itemType: "string"}])
       data = [%{"friend_names" => ["Sam", "Jonesy"]}, %{"friend_names" => []}]
 
-      result = Statement.insert(dataset, data)
+      result = Presto.insert(dataset, data)
       expected_result = ~s|insert into "rivers" ("friend_names") values row(array['Sam','Jonesy']),row(array[])|
 
       assert result == expected_result
@@ -407,7 +408,7 @@ defmodule Pipeline.Writer.TableWriter.StatementTest do
       dataset = config([%{name: "date_of_birth", type: "date"}])
       data = [%{"date_of_birth" => "1901-01-01T00:00:00"}, %{"date_of_birth" => "1901-01-21T00:00:00"}]
 
-      result = Statement.insert(dataset, data)
+      result = Presto.insert(dataset, data)
 
       expected_result =
         ~s|insert into "rivers" ("date_of_birth") values row(date(date_parse('1901-01-01T00:00:00', '%Y-%m-%dT%H:%i:%S'))),row(date(date_parse('1901-01-21T00:00:00', '%Y-%m-%dT%H:%i:%S')))|
@@ -444,7 +445,7 @@ defmodule Pipeline.Writer.TableWriter.StatementTest do
         }
       ]
 
-      result = Statement.insert(dataset, data)
+      result = Presto.insert(dataset, data)
 
       expected_result =
         ~s|insert into "rivers" ("friend_groups") values row(array[row('Hayley','Person'),row('Jason','Doe')]),row(array[row('Saint-John','Johnson')])|
@@ -456,15 +457,52 @@ defmodule Pipeline.Writer.TableWriter.StatementTest do
   describe "drop/1" do
     test "generates a valid DROP TABLE statement" do
       expected = "drop table if exists foo__bar"
-      assert ^expected = Statement.drop(%{table: "foo__bar"})
+      assert ^expected = Presto.drop(%{table: "foo__bar"})
     end
   end
 
   describe "alter/1" do
     test "generates a valid ALTER TABLE statement" do
       expected = "alter table foo__bar rename to foo__baz"
-      assert ^expected = Statement.alter(%{table: "foo__bar", alteration: "rename to foo__baz"})
+      assert ^expected = Presto.alter(%{table: "foo__bar", alteration: "rename to foo__baz"})
     end
+  end
+
+  describe "convert_type/1" do
+    data_test "convert simple type #{type} to #{result}" do
+      assert result == Presto.convert_type(%{type: type})
+
+      where [
+        [:type, :result],
+        ["string", "varchar"],
+        ["boolean", "boolean"],
+        ["date", "date"],
+        ["double", "double"],
+        ["float", "double"],
+        ["integer", "integer"],
+        ["long", "bigint"],
+        ["json", "varchar"],
+        ["timestamp", "timestamp"]
+      ]
+    end
+
+    data_test "converts list of #{type} to array(#{type})" do
+      assert "array(#{result})" == Presto.convert_type(%{type: "list", itemType: type})
+
+      where [
+        [:type, :result],
+        ["string", "varchar"],
+        ["boolean", "boolean"],
+        ["date", "date"],
+        ["double", "double"],
+        ["float", "double"],
+        ["integer", "integer"],
+        ["long", "bigint"],
+        ["json", "varchar"],
+        ["timestamp", "timestamp"]
+      ]
+    end
+
   end
 
   defp config(schema \\ [%{name: "id", type: "integer"}, %{name: "name", type: "string"}]) do

@@ -33,7 +33,8 @@ defmodule Pipeline.MixProject do
       {:placebo, "~> 1.2", only: [:dev, :test, :integration]},
       {:smart_city_test, "~> 0.5", only: [:dev, :test, :integration]},
       {:divo, "~> 1.1", only: [:dev, :integration]},
-      {:divo_kafka, "~> 0.1.5", only: [:dev, :integration]}
+      {:divo_kafka, "~> 0.1.5", only: [:dev, :integration]},
+      {:checkov, "~> 0.4.0", only: [:test]}
     ]
   end
 

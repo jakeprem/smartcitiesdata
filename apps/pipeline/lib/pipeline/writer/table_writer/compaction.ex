@@ -1,20 +1,25 @@
 defmodule Pipeline.Writer.TableWriter.Compaction do
   @moduledoc false
 
-  alias Pipeline.Writer.TableWriter.Statement
+  alias Pipeline.Presto
   require Logger
 
   def setup(table) do
     %{table: "#{table}_compact"}
-    |> Statement.drop()
+    |> Presto.drop()
     |> execute()
 
     table
   end
 
   def run(table) do
+<<<<<<< HEAD
     %{table: "#{table}_compact", as: "select * from #{table}"}
     |> Statement.create()
+=======
+    %{name: "#{table}_compact", as: "select * from #{table}"}
+    |> Presto.create()
+>>>>>>> Refactoring presto logic out of table writer namespace
     |> elem(1)
     |> execute_async()
   end
@@ -32,18 +37,18 @@ defmodule Pipeline.Writer.TableWriter.Compaction do
     compact_table = "#{table}_compact"
 
     %{table: table}
-    |> Statement.drop()
+    |> Presto.drop()
     |> execute()
 
     %{table: compact_table, alteration: "rename to #{table}"}
-    |> Statement.alter()
+    |> Presto.alter()
     |> execute()
 
     :ok
   end
 
   def complete({new, old}, table) do
-    Statement.drop(%{table: "#{table}_compact"})
+    Presto.drop(%{table: "#{table}_compact"})
     |> execute()
 
     message = "Failed '#{table}' compaction. New row count (#{new}) did not match original count (#{old})"

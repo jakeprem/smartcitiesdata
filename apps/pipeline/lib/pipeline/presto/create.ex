@@ -1,7 +1,7 @@
-defmodule Pipeline.Writer.TableWriter.Statement.Create do
+defmodule Pipeline.Presto.Create do
   @moduledoc false
 
-  alias Pipeline.Writer.TableWriter.Statement.FieldTypeError
+  alias Pipeline.Presto.FieldTypeError
 
   @field_type_map %{
     "boolean" => "boolean",
@@ -25,22 +25,22 @@ defmodule Pipeline.Writer.TableWriter.Statement.Create do
     |> Enum.join(", ")
   end
 
-  defp translate_column(%{type: "map"} = col) do
+  def translate_column(%{type: "map"} = col) do
     row_def = translate_columns(col.subSchema)
     ~s|"#{col.name}" row(#{row_def})|
   end
 
-  defp translate_column(%{type: "list", itemType: "map"} = col) do
+  def translate_column(%{type: "list", itemType: "map"} = col) do
     row_def = translate_columns(col.subSchema)
     ~s|"#{col.name}" array(row(#{row_def}))|
   end
 
-  defp translate_column(%{type: "list", itemType: type} = col) do
+  def translate_column(%{type: "list", itemType: type} = col) do
     array_def = translate(type)
     ~s|"#{col.name}" array(#{array_def})|
   end
 
-  defp translate_column(col) do
+  def translate_column(col) do
     ~s|"#{col.name}" #{translate(col.type)}|
   end
 
