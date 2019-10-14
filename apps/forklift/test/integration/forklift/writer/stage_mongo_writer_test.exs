@@ -34,6 +34,7 @@ defmodule Forklift.Writer.StageMongoWriterTest do
 
     test "update existing _schema document if one already exists" do
       system_name = "org_name__dataset_name_2"
+
       schema = [
         %{name: "name", type: "string"}
       ]
@@ -63,42 +64,61 @@ defmodule Forklift.Writer.StageMongoWriterTest do
   end
 
   describe "write/2" do
-    data_test "writes all data to mongo" do
+    data_test "writes #{type} to mongo properly" do
+      dataset_id = :rand.uniform(100_000) |> to_string()
+
       schema = [
-        %{name: "id", type: "integer"},
-        %{name: "name", type: "string"},
-        %{name: "age", type: "integer"},
-        %{name: "birthdate", type: type}
-      ]
-      dataset = TDG.create_dataset(id: "ds1", technical: %{systemName: "org_dataset", schema: schema})
-
-      assert :ok == StageMongoWriter.init(dataset: dataset)
-
-      data = [
-        TDG.create_data(dataset_id: "ds1", payload: %{"id" => id, "name" => "joe", "age" => 21, "birthdate" => value})
+        %{name: "value", type: type}
       ]
 
-      assert :ok == StageMongoWriter.write(data, dataset: dataset)
+      payload = %{"value" => value}
+      write(dataset_id, schema, payload)
 
-      rows = Prestige.execute("select * from mongodb.presto.org_dataset where id = #{id}", rows_as_maps: true) |> Prestige.prefetch()
+      Mongo.find(@mongo_conn, "_schema", %{}) |> Enum.to_list() |> IO.inspect(label: "schema")
+      Mongo.find(@mongo_conn, "system_name_#{dataset_id}", %{}) |> Enum.to_list() |> IO.inspect(label: "data")
 
-      assert [%{"id" => id, "name" => "joe", "age" => 21, "birthdate" => result}] == rows
+      assert [%{"value" => result}] == presto_select(dataset_id)
 
-      where [
-        [:id, :type, :value, :result],
-        [1, "date", DateTime.to_iso8601(DateTime.utc_now()), Date.to_iso8601(Date.utc_today())]
-      ]
+      where([
+        [:type, :value, :result],
+        ["string", "pete-tom", "pete-tom"],
+        ["integer", 1, 1],
+        ["date", "2019-10-11T14:39:32.566895Z", "2019-10-11"],
+        ["date", "2019-10-11T14:39:32.566895", "2019-10-11"],
+        ["timestamp", "2019-10-11T14:39:32.566895Z", "2019-10-11 14:39:32.566"],
+        ["timestamp", "2019-10-11T14:39:32.566895", "2019-10-11 14:39:32.566"]
+      ])
     end
   end
 
-  defp with_table_definition(table, function) when is_function(function, 1) do
-    eventually(fn ->
-      table_def =
-        "describe #{table}"
-        |> Prestige.execute(rows_as_maps: true)
-        |> Prestige.prefetch()
+  defp write(dataset_id, schema, payload) do
+    dataset = TDG.create_dataset(id: dataset_id, technical: %{systemName: "system_name_#{dataset_id}", schema: schema})
+    assert :ok == StageMongoWriter.init(dataset: dataset)
 
-      function.(table_def)
-    end, 1_000, 30)
+    data = [
+      TDG.create_data(dataset_id: dataset_id, payload: payload)
+    ]
+
+    assert :ok == StageMongoWriter.write(data, dataset: dataset)
+  end
+
+  defp presto_select(dataset_id) do
+    Prestige.execute("select * from mongodb.presto.system_name_#{dataset_id}", rows_as_maps: true)
+    |> Prestige.prefetch()
+  end
+
+  defp with_table_definition(table, function) when is_function(function, 1) do
+    eventually(
+      fn ->
+        table_def =
+          "describe #{table}"
+          |> Prestige.execute(rows_as_maps: true)
+          |> Prestige.prefetch()
+
+        function.(table_def)
+      end,
+      1_000,
+      30
+    )
   end
 end

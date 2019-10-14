@@ -10,6 +10,22 @@ defmodule Forklift.Writer.StageMongoWriter do
 
   @mongo_conn Forklift.Application.mongo_connection()
 
+  defmodule Converter do
+    @moduledoc false
+    use Pipeline.Schema.Converter
+
+    def convert_value(type, iso_8601) when type in ["date", "timestamp"] do
+      case DateTime.from_iso8601(iso_8601) do
+        {:ok, date_time, _} ->
+          {:ok, date_time}
+
+        {:error, :missing_offset} ->
+          NaiveDateTime.from_iso8601!(iso_8601)
+          |> DateTime.from_naive("Etc/UTC")
+      end
+    end
+  end
+
   def init(args) do
     %{id: dataset_id, technical: %{systemName: name, schema: schema}} = Keyword.fetch!(args, :dataset)
 
@@ -24,10 +40,11 @@ defmodule Forklift.Writer.StageMongoWriter do
   end
 
   def write(data, opts) do
-    %{technical: %{systemName: system_name}} = Keyword.fetch!(opts, :dataset)
+    %{technical: %{systemName: system_name, schema: schema}} = Keyword.fetch!(opts, :dataset)
+
     payloads =
       Enum.map(data, &Map.get(&1, :payload))
-      |> Enum.map(&convert_payload/1)
+      |> Enum.map(&Converter.convert!(schema, &1))
 
     Mongo.insert_many(@mongo_conn, system_name, payloads)
 
@@ -35,19 +52,8 @@ defmodule Forklift.Writer.StageMongoWriter do
   end
 
   defp update_schema(table, fields) do
-    Mongo.find_one_and_replace(@mongo_conn, "_schema", %{"table" => table}, %{"table" => table, "fields" => fields}, upsert: true)
+    Mongo.find_one_and_replace(@mongo_conn, "_schema", %{"table" => table}, %{"table" => table, "fields" => fields},
+      upsert: true
+    )
   end
-
-  defp convert_payload(payload) do
-    Enum.map(payload, fn {key, value} -> {key, convert_value(value)} end)
-    |> Map.new()
-  end
-
-  defp convert_value(%Date{} = date) do
-    with {:ok, naive_date_time} <- NaiveDateTime.new(date.year, date.month, date.day, 0, 0, 0) do
-      DateTime.from_naive!(naive_date_time, "Etc/UTC")
-    end
-  end
-
-  defp convert_value(value), do: value
 end

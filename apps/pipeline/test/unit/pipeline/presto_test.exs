@@ -88,6 +88,7 @@ defmodule Pipeline.PrestoTest do
     @tag capture_log: true
     test "returns error tuple when given invalid schema" do
       schema = [%{name: "my_field"}]
+
       expected =
         "Unable to parse schema: %Pipeline.Presto.InvalidSchemaError{message: \"Invalid Schema: field %{name: \\\"my_field\\\"}\"}"
 
