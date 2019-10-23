@@ -56,6 +56,4 @@ defmodule Pipeline.Schema.Converter do
       def convert_value(_type, value), do: value
     end
   end
-
-
 end

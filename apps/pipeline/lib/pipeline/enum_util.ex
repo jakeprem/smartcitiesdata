@@ -1,4 +1,5 @@
 defmodule Pipeline.EnumUtil do
+  @moduledoc false
   def safe_map(enum, function) when is_function(function, 1) do
     Enum.reduce_while(enum, [], fn next, acc ->
       case function.(next) do
@@ -8,8 +9,8 @@ defmodule Pipeline.EnumUtil do
       end
     end)
     |> case do
-        {:error, reason} -> {:error, reason}
-        list -> {:ok, Enum.reverse(list)}
-      end
+      {:error, reason} -> {:error, reason}
+      list -> {:ok, Enum.reverse(list)}
+    end
   end
 end

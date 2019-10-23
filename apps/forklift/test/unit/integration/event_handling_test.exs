@@ -14,7 +14,8 @@ defmodule Forklift.Integration.EventHandlingTest do
   describe "on dataset:update event" do
     test "ensures table exists for a dataset" do
       test = self()
-      expect(MockTable, :init, fn args -> send(test, args) end)
+      stub(MockBuffer, :init, fn _args -> :ok end)
+      expect MockTable, :init, fn args -> send(test, args) end
 
       dataset = TDG.create_dataset(%{})
       table_name = dataset.technical.systemName
@@ -22,6 +23,24 @@ defmodule Forklift.Integration.EventHandlingTest do
 
       Brook.Event.send(instance_name(), dataset_update(), :author, dataset)
       assert_receive table: ^table_name, schema: ^schema
+    end
+
+    test "ensures buffer writer is initialized with dataset" do
+      test = self()
+      stub(MockTable, :init, fn _args -> :ok end)
+      expect MockBuffer, :init, fn args -> send(test, args) end
+
+      dataset = TDG.create_dataset(%{})
+      Brook.Event.send(instance_name(), dataset_update(), :author, dataset)
+
+      assert_receive dataset: ^dataset
+    end
+
+    test "does not create table for non-ingestible dataset" do
+      expect MockBuffer, :init, 0, fn _ -> :ok end
+      expect MockTable, :init, 0, fn _ -> :ok end
+      dataset = TDG.create_dataset(%{technical: %{sourceType: "remote"}})
+      Brook.Event.send(instance_name(), dataset_update(), :author, dataset)
     end
   end
 

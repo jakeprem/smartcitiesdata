@@ -1,4 +1,4 @@
-defmodule Forklift.Writer.StageMongoWriter do
+defmodule Forklift.Writer.BufferWriter do
   @moduledoc "TODO"
   require Logger
   @behaviour Pipeline.Writer

@@ -19,9 +19,9 @@ defmodule Forklift.EventHandler do
     end
   end
 
-  def handle_event(%Brook.Event{type: dataset_update(), data: %Dataset{} = dataset}) do
-    [table: dataset.technical.systemName, schema: dataset.technical.schema]
-    |> Forklift.DataWriter.init()
+  def handle_event(%Brook.Event{type: dataset_update(), data: %Dataset{technical: %{sourceType: type}} = dataset})
+      when type in ["stream", "ingest"] do
+    Forklift.DataWriter.init(dataset: dataset)
 
     :discard
   end

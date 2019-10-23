@@ -16,6 +16,7 @@ defmodule Forklift.DataWriter do
 
   @topic_writer Application.get_env(:forklift, :topic_writer)
   @table_writer Application.get_env(:forklift, :table_writer)
+  @buffer_writer Application.get_env(:forklift, :buffer_writer)
   @max_wait_time 1_000 * 60 * 60
 
   @impl Pipeline.Writer
@@ -23,7 +24,9 @@ defmodule Forklift.DataWriter do
   Ensures a table exists using `:table_writer` from Forklift's application environment.
   """
   def init(args) do
-    @table_writer.init(args)
+    dataset = Keyword.fetch!(args, :dataset)
+    @table_writer.init(table: dataset.technical.systemName, schema: dataset.technical.schema)
+    @buffer_writer.init(dataset: dataset)
   end
 
   @impl Pipeline.Writer

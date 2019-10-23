@@ -1,9 +1,9 @@
-defmodule Forklift.Writer.StageMongoWriterTest do
+defmodule Forklift.Writer.BufferWriterTest do
   use ExUnit.Case
   use Divo
   import Checkov
 
-  alias Forklift.Writer.StageMongoWriter
+  alias Forklift.Writer.BufferWriter
   alias SmartCity.TestDataGenerator, as: TDG
   import SmartCity.TestHelper, only: [eventually: 3]
 
@@ -19,7 +19,7 @@ defmodule Forklift.Writer.StageMongoWriterTest do
 
       dataset = TDG.create_dataset(id: "ds1", technical: %{systemName: "org_name__dataset_name", schema: schema})
 
-      assert :ok == StageMongoWriter.init(dataset: dataset)
+      assert :ok == BufferWriter.init(dataset: dataset)
 
       expected = [
         %{"Column" => "one", "Comment" => "", "Extra" => "", "Type" => "array(varchar)"},
@@ -41,7 +41,7 @@ defmodule Forklift.Writer.StageMongoWriterTest do
 
       dataset = TDG.create_dataset(id: "ds1", technical: %{systemName: system_name, schema: schema})
 
-      assert :ok == StageMongoWriter.init(dataset: dataset)
+      assert :ok == BufferWriter.init(dataset: dataset)
 
       schema = [
         %{name: "name", type: "string"},
@@ -50,7 +50,7 @@ defmodule Forklift.Writer.StageMongoWriterTest do
 
       dataset = TDG.create_dataset(id: "ds1", technical: %{systemName: system_name, schema: schema})
 
-      assert :ok == StageMongoWriter.init(dataset: dataset)
+      assert :ok == BufferWriter.init(dataset: dataset)
 
       expected = [
         %{"Column" => "name", "Comment" => "", "Extra" => "", "Type" => "varchar"},
@@ -93,13 +93,13 @@ defmodule Forklift.Writer.StageMongoWriterTest do
 
   defp write(dataset_id, schema, payload) do
     dataset = TDG.create_dataset(id: dataset_id, technical: %{systemName: "system_name_#{dataset_id}", schema: schema})
-    assert :ok == StageMongoWriter.init(dataset: dataset)
+    assert :ok == BufferWriter.init(dataset: dataset)
 
     data = [
       TDG.create_data(dataset_id: dataset_id, payload: payload)
     ]
 
-    assert :ok == StageMongoWriter.write(data, dataset: dataset)
+    assert :ok == BufferWriter.write(data, dataset: dataset)
   end
 
   defp presto_select(dataset_id) do
