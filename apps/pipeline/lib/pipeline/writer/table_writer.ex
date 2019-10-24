@@ -19,7 +19,8 @@ defmodule Pipeline.Writer.TableWriter do
     config = parse_args(args)
 
     with {:ok, statement} <- Presto.create(config),
-         [[true]] <- execute(statement) do
+         {:ok, result} <- execute(statement),
+         [[true]] <- result.rows do
       Logger.info("Created #{config.table} table")
       :ok
     else
@@ -47,8 +48,8 @@ defmodule Pipeline.Writer.TableWriter do
     |> Presto.insert(payloads)
     |> execute()
     |> case do
-      [[_]] -> :ok
-      error -> {:error, error}
+      {:ok, _result} -> :ok
+      {:error, error} -> {:error, error}
     end
   end
 
@@ -75,8 +76,11 @@ defmodule Pipeline.Writer.TableWriter do
   end
 
   defp execute(statement) do
-    statement
-    |> Prestige.execute()
-    |> Prestige.prefetch()
+    Prestige.query(session(), statement)
+  end
+
+  defp session() do
+    Application.get_all_env(:presto)
+    |> Prestige.new_session()
   end
 end

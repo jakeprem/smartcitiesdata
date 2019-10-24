@@ -8,6 +8,7 @@ defmodule Forklift.Writer.BufferWriterTest do
   import SmartCity.TestHelper, only: [eventually: 3]
 
   @mongo_conn Forklift.Application.mongo_connection()
+  @presto_session Application.get_all_env(:presto) |> Prestige.new_session()
 
   describe "init/1" do
     test "Adds document to _schema collection for dataset" do
@@ -74,9 +75,6 @@ defmodule Forklift.Writer.BufferWriterTest do
       payload = %{"value" => value}
       write(dataset_id, schema, payload)
 
-      Mongo.find(@mongo_conn, "_schema", %{}) |> Enum.to_list() |> IO.inspect(label: "schema")
-      Mongo.find(@mongo_conn, "system_name_#{dataset_id}", %{}) |> Enum.to_list() |> IO.inspect(label: "data")
-
       assert [%{"value" => result}] == presto_select(dataset_id)
 
       where([
@@ -89,31 +87,45 @@ defmodule Forklift.Writer.BufferWriterTest do
         ["timestamp", "2019-10-11T14:39:32.566895", "2019-10-11 14:39:32.566"]
       ])
     end
+
+    test "insert data into presto when configured number of records have been inserted" do
+      dataset_id = "ds_buffer_01"
+
+      schema = [
+        %{name: "name", type: "string"}
+      ]
+
+      batch = Enum.map(1..101, fn i -> %{"name" => "Fred-#{i}"} end)
+      write(dataset_id, schema, batch)
+
+      result = Prestige.query!(@presto_session, "select count(1) from system_name_#{dataset_id}")
+      assert [[101]] == result.rows
+      assert 0 == Mongo.estimated_document_count!(@mongo_conn, "system_name_#{dataset_id}", [])
+    end
   end
 
-  defp write(dataset_id, schema, payload) do
+  defp write(dataset_id, schema, payloads) when is_list(payloads) do
     dataset = TDG.create_dataset(id: dataset_id, technical: %{systemName: "system_name_#{dataset_id}", schema: schema})
+    Pipeline.Writer.TableWriter.init(table: dataset.technical.systemName, schema: schema)
     assert :ok == BufferWriter.init(dataset: dataset)
 
-    data = [
-      TDG.create_data(dataset_id: dataset_id, payload: payload)
-    ]
-
+    data = Enum.map(payloads, fn payload -> TDG.create_data(dataset_id: dataset_id, payload: payload) end)
     assert :ok == BufferWriter.write(data, dataset: dataset)
   end
 
+  defp write(dataset_id, schema, payload) do
+    write(dataset_id, schema, [payload])
+  end
+
   defp presto_select(dataset_id) do
-    Prestige.execute("select * from mongodb.presto.system_name_#{dataset_id}", rows_as_maps: true)
-    |> Prestige.prefetch()
+    Prestige.query!(@presto_session, "select * from mongodb.presto.system_name_#{dataset_id}")
+    |> Prestige.Result.as_maps()
   end
 
   defp with_table_definition(table, function) when is_function(function, 1) do
     eventually(
       fn ->
-        table_def =
-          "describe #{table}"
-          |> Prestige.execute(rows_as_maps: true)
-          |> Prestige.prefetch()
+        table_def = Prestige.query!(@presto_session, "describe #{table}") |> Prestige.Result.as_maps()
 
         function.(table_def)
       end,

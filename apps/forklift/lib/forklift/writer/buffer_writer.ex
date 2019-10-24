@@ -9,6 +9,7 @@ defmodule Forklift.Writer.BufferWriter do
                 |> Keyword.get(:table_writer, Pipeline.Writer.TableWriter)
 
   @mongo_conn Forklift.Application.mongo_connection()
+  @max_buffer_size Application.get_env(:forklift, __MODULE__, [])[:max_buffer_size] || 100_000
 
   defmodule Converter do
     @moduledoc false
@@ -48,12 +49,31 @@ defmodule Forklift.Writer.BufferWriter do
 
     Mongo.insert_many(@mongo_conn, system_name, payloads)
 
+    if Mongo.estimated_document_count!(@mongo_conn, system_name, []) > @max_buffer_size do
+      Prestige.transaction(session(), fn tx ->
+        Prestige.query!(tx, insert_statement(system_name, schema))
+        :commit
+      end)
+
+      Mongo.delete_many!(@mongo_conn, system_name, %{})
+    end
+
     :ok
+  end
+
+  defp insert_statement(table_name, schema) do
+    fields = Enum.map(schema, fn %{name: name} -> name end) |> Enum.join(", ")
+    "insert into #{table_name}(#{fields}) select #{fields} from mongodb.presto.#{table_name}"
   end
 
   defp update_schema(table, fields) do
     Mongo.find_one_and_replace(@mongo_conn, "_schema", %{"table" => table}, %{"table" => table, "fields" => fields},
       upsert: true
     )
+  end
+
+  defp session() do
+    Application.get_all_env(:presto)
+    |> Prestige.new_session()
   end
 end

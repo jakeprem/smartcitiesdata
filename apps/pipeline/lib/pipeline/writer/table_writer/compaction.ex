@@ -66,9 +66,8 @@ defmodule Pipeline.Writer.TableWriter.Compaction do
   end
 
   defp execute(statement) do
-    statement
-    |> Prestige.execute()
-    |> Prestige.prefetch()
+    result = Prestige.query!(session(), statement)
+    result.rows
   end
 
   defp execute_async(statement) do
@@ -79,5 +78,10 @@ defmodule Pipeline.Writer.TableWriter.Compaction do
         e -> Logger.error("Failed to execute '#{statement}': #{inspect(e)}")
       end
     end)
+  end
+
+  defp session() do
+    Application.get_all_env(:presto)
+    |> Prestige.new_session()
   end
 end

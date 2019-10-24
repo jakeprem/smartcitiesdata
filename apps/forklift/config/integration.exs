@@ -61,6 +61,8 @@ config :forklift, :dead_letter,
     ]
   ]
 
+config :forklift, Forklift.Writer.BufferWriter, max_buffer_size: 100
+
 config :forklift, :mongo,
   hostname: host,
   username: "root",

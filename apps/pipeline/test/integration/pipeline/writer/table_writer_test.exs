@@ -8,6 +8,8 @@ defmodule Pipeline.Writer.TableWriterTest do
   alias SmartCity.TestDataGenerator, as: TDG
   import SmartCity.TestHelper, only: [eventually: 1]
 
+  @session Application.get_all_env(:presto) |> Prestige.new_session()
+
   describe "init/1" do
     test "creates table with correct name and schema" do
       expected = [
@@ -27,10 +29,7 @@ defmodule Pipeline.Writer.TableWriterTest do
       TableWriter.init(table: dataset.technical.systemName, schema: dataset.technical.schema)
 
       eventually(fn ->
-        table =
-          "describe hive.default.org_name__dataset_name"
-          |> Prestige.execute(rows_as_maps: true)
-          |> Prestige.prefetch()
+        table = Prestige.query!(@session, "describe hive.default.org_name__dataset_name") |> Prestige.Result.as_maps()
 
         assert table == expected
       end)
@@ -43,10 +42,7 @@ defmodule Pipeline.Writer.TableWriterTest do
       TableWriter.init(table: dataset.technical.systemName, schema: dataset.technical.schema)
 
       eventually(fn ->
-        table =
-          "describe hive.default.foo"
-          |> Prestige.execute(rows_as_maps: true)
-          |> Prestige.prefetch()
+        table = Prestige.query!(@session, "describe hive.default.foo") |> Prestige.Result.as_maps()
 
         assert table == expected
       end)
@@ -66,12 +62,9 @@ defmodule Pipeline.Writer.TableWriterTest do
       TableWriter.write([datum1, datum2], table: dataset.technical.systemName, schema: schema)
 
       eventually(fn ->
-        result =
-          "select * from foo__bar"
-          |> Prestige.execute()
-          |> Prestige.prefetch()
+        result = Prestige.query!(@session, "select * from foo__bar")
 
-        assert result == [["hello", 42], ["goodbye", 9001]]
+        assert result.rows == [["hello", 42], ["goodbye", 9001]]
       end)
     end
 
@@ -141,12 +134,9 @@ defmodule Pipeline.Writer.TableWriterTest do
       assert :ok = TableWriter.write([datum], table: dataset.technical.systemName, schema: schema)
 
       eventually(fn ->
-        result =
-          "select * from foo__baz"
-          |> Prestige.execute()
-          |> Prestige.prefetch()
+        result = Prestige.query!(@session, "select * from foo__baz")
 
-        assert result == [expected]
+        assert result.rows == [expected]
       end)
     end
   end
@@ -166,19 +156,15 @@ defmodule Pipeline.Writer.TableWriterTest do
       end)
 
       eventually(fn ->
-        assert [[10]] =
-                 "select count(1) from #{dataset.technical.systemName}"
-                 |> Prestige.execute()
-                 |> Prestige.prefetch()
+        result = Prestige.query!(@session, "select count(1) from #{dataset.technical.systemName}")
+        assert [[10]] = result.rows
       end)
 
       assert :ok = TableWriter.compact(table: dataset.technical.systemName)
 
       eventually(fn ->
-        assert [[10]] =
-                 "select count(1) from #{dataset.technical.systemName}"
-                 |> Prestige.execute()
-                 |> Prestige.prefetch()
+        result = Prestige.query!(@session, "select count(1) from #{dataset.technical.systemName}")
+        assert [[10]] == result.rows
       end)
     end
 
@@ -199,12 +185,9 @@ defmodule Pipeline.Writer.TableWriterTest do
       assert {:error, _} = TableWriter.compact(table: "xyz")
 
       eventually(fn ->
-        [[count]] =
-          "select count(1) from xyz"
-          |> Prestige.execute()
-          |> Prestige.prefetch()
+        result = Prestige.query!(@session, "select count(1) from xyz")
 
-        assert count == 10
+        assert [[10]] == result.rows
       end)
     end
   end
