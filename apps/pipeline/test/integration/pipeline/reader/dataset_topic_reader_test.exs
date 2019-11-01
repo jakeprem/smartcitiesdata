@@ -78,13 +78,17 @@ defmodule Pipeline.Reader.DatasetTopicReaderTest do
       Application.put_env(:smart_city_test, :endpoint, @brokers)
       SmartCity.KafkaHelper.send_to_kafka(message, "#{@prefix}-read")
 
-      eventually(fn ->
-        assert {:ok, [%Elsa.Message{value: json, topic: "#{@prefix}-read"}]} =
-                 Registry.meta(Pipeline.TestRegistry, :messages)
+      eventually(
+        fn ->
+          assert {:ok, [%Elsa.Message{value: json, topic: "#{@prefix}-read"}]} =
+                   Registry.meta(Pipeline.TestRegistry, :messages)
 
-        assert Jason.decode!(json)["payload"]["my_float"] == message.payload["my_float"]
-        assert Jason.decode!(json)["payload"]["my_string"] == message.payload["my_string"]
-      end, 5_000, 5)
+          assert Jason.decode!(json)["payload"]["my_float"] == message.payload["my_float"]
+          assert Jason.decode!(json)["payload"]["my_string"] == message.payload["my_string"]
+        end,
+        5_000,
+        5
+      )
     end
 
     test "tracks reader infrastructure" do
@@ -124,7 +128,7 @@ defmodule Pipeline.Reader.DatasetTopicReaderTest do
       assert :ok = DatasetTopicReader.init(args)
       assert :ok = DatasetTopicReader.init(args)
 
-      [{:undefined, pid1, _, _}, {:undefined, pid2, _, _}] =
+      [{:undefined, pid1, _, _}, {:undefined, pid2, _, _}, {:undefined, _pid3, _, _}] =
         DynamicSupervisor.which_children(Pipeline.DynamicSupervisor)
 
       Process.monitor(pid1)
@@ -132,8 +136,8 @@ defmodule Pipeline.Reader.DatasetTopicReaderTest do
 
       eventually(fn ->
         assert {"#{@prefix}-idempotent", 1} in Elsa.Topic.list(@brokers)
-        assert_receive {:DOWN, _, _, ^pid1, :normal}, 1_000
-        assert_receive {:DOWN, _, _, ^pid2, :normal}, 1_000
+        assert_receive {:DOWN, _, _, ^pid1, _}, 1_000
+        assert_receive {:DOWN, _, _, ^pid2, _}, 1_000
       end)
     end
 
@@ -177,11 +181,15 @@ defmodule Pipeline.Reader.DatasetTopicReaderTest do
 
       assert :ok = DatasetTopicReader.init(args)
 
-      eventually(fn ->
-        assert [{:undefined, pid, _, _}] = DynamicSupervisor.which_children(Pipeline.DynamicSupervisor)
-        assert {:ok, ^pid} = Registry.meta(Pipeline.Registry, :"pipeline-#{@prefix}-#{dataset.id}-consumer")
-        Process.monitor(pid)
-      end, 3_000, 5)
+      eventually(
+        fn ->
+          assert [{:undefined, pid, _, _}] = DynamicSupervisor.which_children(Pipeline.DynamicSupervisor)
+          assert {:ok, ^pid} = Registry.meta(Pipeline.Registry, :"pipeline-#{@prefix}-#{dataset.id}-consumer")
+          Process.monitor(pid)
+        end,
+        3_000,
+        5
+      )
 
       {:ok, pid} = Registry.meta(Pipeline.Registry, :"pipeline-#{@prefix}-#{dataset.id}-consumer")
       DatasetTopicReader.terminate(dataset: dataset, input_topic_prefix: @prefix, instance: :pipeline)

@@ -1,25 +1,38 @@
 defmodule Pipeline.Reader.DatasetTopicReader.InitTask do
   @moduledoc false
 
-  use Task, restart: :transient
+  use GenServer, restart: :transient
   use Retry
 
   def start_link(args) do
-    Task.start_link(__MODULE__, :run, [args])
+    GenServer.start_link(__MODULE__, args)
   end
 
-  def run(args) do
+  def init(args) do
     config = parse_args(args)
-    consumer = consumer_spec(config)
 
     Elsa.create_topic(config.endpoints, config.topic)
     wait_for_topic!(config)
 
+    {:ok, config, {:continue, :start_consumer}}
+  end
+
+  def handle_continue(:start_consumer, config) do
+    consumer = consumer_spec(config)
+
     case DynamicSupervisor.start_child(Pipeline.DynamicSupervisor, consumer) do
-      {:ok, pid} -> Registry.put_meta(Pipeline.Registry, config.connection, pid)
-      {:error, {:already_started, _}} -> :ok
-      {:error, {_, {_, _, {:already_started, _}}}} -> :ok
-      error -> raise "Failed to supervise #{config.topic} consumer: #{inspect(error)}"
+      {:ok, pid} ->
+        Registry.put_meta(Pipeline.Registry, config.connection, pid)
+        {:stop, :normal, config}
+
+      {:error, {:already_started, _}} ->
+        {:stop, :normal, config}
+
+      {:error, {_, {_, _, {:already_started, _}}}} ->
+        {:stop, :normal, config}
+
+      error ->
+        {:stop, "Failed to supervise #{config.topic} consumer: #{inspect(error)}", config}
     end
   end
 
