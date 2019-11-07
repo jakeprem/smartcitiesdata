@@ -43,6 +43,7 @@ config :forklift, :brook,
     ]
   ],
   handlers: [Forklift.EventHandler],
+  event_processing_timeout: :infinity,
   storage: [
     module: Brook.Storage.Redis,
     init_arg: [
