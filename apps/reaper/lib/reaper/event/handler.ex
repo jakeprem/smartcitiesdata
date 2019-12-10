@@ -15,7 +15,7 @@ defmodule Reaper.Event.Handler do
 
   alias Reaper.Collections.{Extractions, FileIngestions}
 
-  @instance Reaper.Application.instance()
+  @instance Reaper.brook_instance()
 
   def handle_event(%Brook.Event{type: dataset_update(), data: %SmartCity.Dataset{} = dataset}) do
     Reaper.Event.Handlers.DatasetUpdate.handle(dataset)

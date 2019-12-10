@@ -6,7 +6,7 @@ defmodule Reaper.Migrations do
 
   require Logger
 
-  @instance Reaper.Application.instance()
+  @instance Reaper.brook_instance()
 
   def start_link(args) do
     GenServer.start_link(__MODULE__, args, name: __MODULE__)

@@ -3,7 +3,7 @@ defmodule Reaper.AuthRetriever do
   Call the authUrl of a dataset, passing the authHeaders, and returning the response.
   """
 
-  @instance Reaper.Application.instance()
+  @instance Reaper.brook_instance()
 
   def retrieve(dataset_id) do
     dataset = Brook.get!(@instance, :reaper_config, dataset_id)

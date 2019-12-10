@@ -22,6 +22,7 @@ config :redix,
 System.put_env("HOST", "localhost")
 
 config :reaper,
+  topic_writer: MockTopic,
   divo: [
     {DivoKafka, [create_topics: "streaming-raw:1:1"]},
     DivoRedis

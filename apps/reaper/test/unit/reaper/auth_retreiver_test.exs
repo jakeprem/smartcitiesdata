@@ -2,7 +2,7 @@ defmodule AuthRetrieverTest do
   use ExUnit.Case
   use Placebo
 
-  @instance Reaper.Application.instance()
+  @instance Reaper.brook_instance()
 
   describe "retrieve/1" do
     test "retrieve response using auth headers and url" do

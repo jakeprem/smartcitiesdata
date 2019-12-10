@@ -5,7 +5,6 @@ defmodule Reaper.Application do
   require Logger
 
   def redis_client(), do: :reaper_redix
-  def instance(), do: :reaper_brook
 
   def start(_type, _args) do
     children =
@@ -45,7 +44,7 @@ defmodule Reaper.Application do
   end
 
   defp brook() do
-    config = Application.get_env(:reaper, :brook) |> Keyword.put(:instance, instance())
+    config = Application.get_env(:reaper, :brook) |> Keyword.put(:instance, Reaper.brook_instance())
     {Brook, config}
   end
 

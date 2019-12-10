@@ -6,7 +6,7 @@ defmodule Reaper.InitTest do
   alias Reaper.Collections.{Extractions, FileIngestions}
   import SmartCity.TestHelper
 
-  @instance Reaper.Application.instance()
+  @instance Reaper.brook_instance()
 
   setup do
     {:ok, horde_supervisor} = Horde.DynamicSupervisor.start_link(name: Reaper.Horde.Supervisor, strategy: :one_for_one)

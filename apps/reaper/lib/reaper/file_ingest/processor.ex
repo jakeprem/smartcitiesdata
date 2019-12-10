@@ -12,7 +12,7 @@ defmodule Reaper.FileIngest.Processor do
     DataSlurper
   }
 
-  @instance Reaper.Application.instance()
+  @instance Reaper.brook_instance()
 
   @doc """
   Process a hosted dataset

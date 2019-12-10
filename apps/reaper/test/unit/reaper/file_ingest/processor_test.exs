@@ -10,7 +10,7 @@ defmodule Reaper.FileIngest.ProcessorTest do
 
   @dataset_id "12345"
   @bucket Application.get_env(:reaper, :hosted_file_bucket)
-  @instance Reaper.Application.instance()
+  @instance Reaper.brook_instance()
 
   @download_dir System.get_env("TMPDIR") || "/tmp/reaper/"
   use TempEnv, reaper: [download_dir: @download_dir]

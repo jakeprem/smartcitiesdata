@@ -16,7 +16,7 @@ defmodule Reaper.Event.HandlerTest do
   alias Reaper.Collections.FileIngestions
   alias SmartCity.TestDataGenerator, as: TDG
 
-  @instance Reaper.Application.instance()
+  @instance Reaper.brook_instance()
 
   setup do
     {:ok, brook} = Brook.start_link(Application.get_env(:reaper, :brook) |> Keyword.put(:instance, @instance))

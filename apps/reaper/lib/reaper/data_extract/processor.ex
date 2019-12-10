@@ -8,7 +8,8 @@ defmodule Reaper.DataExtract.Processor do
     Decoder,
     DataSlurper,
     UrlBuilder,
-    Persistence
+    Persistence,
+    TopicWriter
   }
 
   alias Reaper.DataExtract.{ValidationStage, SchemaStage, LoadStage}
@@ -25,7 +26,7 @@ defmodule Reaper.DataExtract.Processor do
   def process(%SmartCity.Dataset{} = dataset) do
     Process.flag(:trap_exit, true)
 
-    validate_destination(dataset)
+    TopicWriter.init(dataset.id)
     validate_cache(dataset)
 
     generated_time_stamp = DateTime.utc_now()
@@ -60,12 +61,6 @@ defmodule Reaper.DataExtract.Processor do
     |> Decoder.decode(dataset)
     |> Stream.with_index()
     |> GenStage.from_enumerable()
-  end
-
-  defp validate_destination(dataset) do
-    topic = "#{topic_prefix()}-#{dataset.id}"
-    create_topic(topic)
-    start_topic_producer(topic)
   end
 
   defp validate_cache(%SmartCity.Dataset{id: id, technical: %{allow_duplicates: false}}) do

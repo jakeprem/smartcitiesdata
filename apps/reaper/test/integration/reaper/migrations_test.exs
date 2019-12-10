@@ -5,7 +5,7 @@ defmodule Reaper.MigrationsTest do
   import SmartCity.TestHelper
   alias SmartCity.TestDataGenerator, as: TDG
 
-  @instance Reaper.Application.instance()
+  @instance Reaper.brook_instance()
 
   describe "quantum job migration" do
     @tag :capture_log

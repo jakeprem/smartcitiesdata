@@ -9,6 +9,7 @@ config :yeet,
   topic: "dead-letters"
 
 config :reaper,
+  topic_writer: MockTopic,
   output_topic_prefix: "raw",
   produce_retries: 2,
   produce_timeout: 10,

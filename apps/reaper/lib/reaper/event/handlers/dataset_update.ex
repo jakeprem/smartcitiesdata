@@ -7,7 +7,7 @@ defmodule Reaper.Event.Handlers.DatasetUpdate do
   alias Quantum.Job
   alias Reaper.Collections.Extractions
 
-  @instance Reaper.Application.instance()
+  @instance Reaper.brook_instance()
 
   @cron_conversions %{
     86_400_000 => "0 6 * * *",

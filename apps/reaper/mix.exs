@@ -58,6 +58,7 @@ defmodule Reaper.MixProject do
       {:mint, "~> 0.4"},
       {:nimble_csv, "~> 0.6.0"},
       {:observer_cli, "~> 1.5"},
+      {:pipeline, in_umbrella: true},
       {:plug_cowboy, "~> 2.1"},
       {:protobuf, "~> 0.6"},
       {:quantum, "~> 2.3"},

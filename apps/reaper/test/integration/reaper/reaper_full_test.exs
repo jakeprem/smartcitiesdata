@@ -11,7 +11,7 @@ defmodule Reaper.FullTest do
   @endpoints Application.get_env(:reaper, :elsa_brokers)
   @brod_endpoints Enum.map(@endpoints, fn {host, port} -> {to_charlist(host), port} end)
   @output_topic_prefix Application.get_env(:reaper, :output_topic_prefix)
-  @instance Reaper.Application.instance()
+  @instance Reaper.brook_instance()
   @redix Reaper.Application.redis_client()
 
   @pre_existing_dataset_id "00000-0000"

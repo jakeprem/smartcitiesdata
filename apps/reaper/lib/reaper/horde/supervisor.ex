@@ -7,7 +7,7 @@ defmodule Reaper.Horde.Supervisor do
 
   import SmartCity.Event, only: [data_extract_end: 0, file_ingest_end: 0]
 
-  @instance Reaper.Application.instance()
+  @instance Reaper.brook_instance()
 
   def start_link(init_args \\ []) do
     Horde.DynamicSupervisor.start_link(__MODULE__, init_args, name: __MODULE__)

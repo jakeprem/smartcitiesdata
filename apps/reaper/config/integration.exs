@@ -18,6 +18,7 @@ config :logger,
 bucket_name = "hosted-dataset-files"
 
 config :reaper,
+  topic_writer: Pipeline.Writer.TopicWriter,
   divo: [
     {DivoKafka,
      [

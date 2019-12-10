@@ -8,7 +8,7 @@ defmodule Reaper.S3ExtractorTest do
 
   @bucket Application.get_env(:reaper, :hosted_file_bucket)
   @org "my-org"
-  @instance Reaper.Application.instance()
+  @instance Reaper.brook_instance()
   @id "geojson-dataset"
   @endpoints Application.get_env(:reaper, :elsa_brokers)
 
