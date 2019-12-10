@@ -86,10 +86,6 @@ defmodule Reaper.DataExtract.LoadStage do
     Application.get_env(:reaper, :batch_size_in_bytes, 900_000)
   end
 
-  defp topic_prefix() do
-    Application.get_env(:reaper, :output_topic_prefix)
-  end
-
   defp convert_to_data_message(payload, state) do
     start = format_date(state.start_time)
     stop = format_date(DateTime.utc_now())

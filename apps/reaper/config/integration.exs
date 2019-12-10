@@ -19,6 +19,8 @@ bucket_name = "hosted-dataset-files"
 
 config :reaper,
   topic_writer: Pipeline.Writer.TopicWriter,
+  retry_count: 10,
+  retry_initial_delay: 100,
   divo: [
     {DivoKafka,
      [
