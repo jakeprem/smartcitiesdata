@@ -4,7 +4,7 @@ defmodule Reaper.DataExtract.LoadStage do
   require Logger
 
   alias SmartCity.Data
-  alias Reaper.{Cache, Persistence}
+  alias Reaper.{Cache, Persistence, TopicWriter}
 
   def start_link(opts) do
     GenStage.start_link(__MODULE__, opts)
@@ -60,15 +60,10 @@ defmodule Reaper.DataExtract.LoadStage do
 
   defp process_batch(%{batch: []}), do: nil
 
-  defp process_batch(state) do
-    send_to_kafka(state)
+  defp process_batch(%{dataset: dataset, batch: batch} = state) do
+    TopicWriter.write(batch, id: dataset.id)
     mark_batch_processed(state)
     cache_batch(state)
-  end
-
-  defp send_to_kafka(%{dataset: dataset, batch: batch}) do
-    topic = "#{topic_prefix()}-#{dataset.id}"
-    :ok = Elsa.produce(:"#{topic}_producer", topic, Enum.reverse(batch), partition: 0)
   end
 
   defp mark_batch_processed(%{dataset: dataset, originals: originals}) do

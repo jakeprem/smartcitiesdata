@@ -7,14 +7,15 @@ defmodule Reaper.TopicWriter do
 
   @impl Pipeline.Writer
   def init(dataset_id) do
-    :reaper
+    Reaper.instance()
     |> bootstrap_args(dataset_id)
     |> @topic_writer.init()
   end
 
   @impl Pipeline.Writer
-  def write(data, dataset) do
-    :ok
+  def write(batch, opts) do
+    topic = topic_name(Reaper.instance(), Keyword.fetch!(opts, :id))
+    :ok = Elsa.produce(:"#{topic}_producer", topic, Enum.reverse(batch), partition: 0)
   end
 
   defp bootstrap_args(instance, id) do
