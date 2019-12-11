@@ -15,7 +15,8 @@ defmodule Reaper.TopicWriter do
   @impl Pipeline.Writer
   def write(batch, opts) do
     topic = topic_name(Reaper.instance(), Keyword.fetch!(opts, :id))
-    :ok = Elsa.produce(:"#{topic}_producer", topic, Enum.reverse(batch), partition: 0)
+    writer_args = [instance: Reaper.instance(), producer_name: :"#{topic}_producer", partition: 0]
+    :ok = @topic_writer.write(Enum.reverse(batch), writer_args)
   end
 
   defp bootstrap_args(instance, id) do

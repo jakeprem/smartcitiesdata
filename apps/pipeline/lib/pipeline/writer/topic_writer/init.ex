@@ -19,7 +19,7 @@ defmodule Pipeline.Writer.TopicWriter.InitTask do
       {:ok, _pid} ->
         :ok = Registry.put_meta(Pipeline.Registry, config.name, config.topic)
 
-      {:error, {:already_started, _pid}} ->
+      {:error, {:shutdown, {:failed_to_start_child, Elsa.Registry, {:already_started, _pid}}}} ->
         :ok = Registry.put_meta(Pipeline.Registry, config.name, config.topic)
 
       error ->

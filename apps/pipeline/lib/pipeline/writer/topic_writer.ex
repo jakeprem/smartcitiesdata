@@ -31,9 +31,10 @@ defmodule Pipeline.Writer.TopicWriter do
   """
   def write(content, config) when is_list(content) do
     instance_producer = producer(config)
+    opts = producer_opts(config)
 
     {:ok, topic} = Registry.meta(Pipeline.Registry, instance_producer)
-    Elsa.produce(instance_producer, topic, content)
+    Elsa.produce(instance_producer, topic, content, opts)
   end
 
   defp producer(config) do
@@ -42,4 +43,6 @@ defmodule Pipeline.Writer.TopicWriter do
 
     :"#{instance}-#{producer_name}"
   end
+
+  defp producer_opts(config), do: Keyword.drop(config, [:instance, :producer_name])
 end
