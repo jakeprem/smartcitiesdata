@@ -9,13 +9,12 @@ config :yeet,
   topic: "dead-letters"
 
 config :reaper,
-  topic_writer: MockTopic,
+  topic_writer: MockWriter,
   retry_count: 5,
   retry_initial_delay: 10,
   output_topic_prefix: "raw",
   produce_retries: 2,
   produce_timeout: 10,
-  secrets_endpoint: "http://vault:8200",
   hosted_file_bucket: "hosted-dataset-files",
   task_delay_on_failure: 1_000
 

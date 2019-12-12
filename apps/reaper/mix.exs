@@ -78,7 +78,7 @@ defmodule Reaper.MixProject do
       {:checkov, "~> 0.4", only: [:test, :integration]},
       {:credo, "~> 1.1", only: [:dev, :test, :integration], runtime: false},
       {:dialyxir, "~> 1.0.0-rc.6", only: [:dev]},
-      {:divo, "~> 1.1", only: [:dev, :integration], override: true},
+      {:divo, "~> 1.1", only: [:dev, :integration]},
       {:divo_kafka, "~> 0.1", only: [:dev, :integration]},
       {:divo_redis, "~> 0.1", only: [:dev, :integration]},
       {:excoveralls, "~> 0.11", only: :test},

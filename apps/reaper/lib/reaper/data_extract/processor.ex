@@ -84,33 +84,4 @@ defmodule Reaper.DataExtract.Processor do
         wait_for_completion(pids)
     end
   end
-
-  defp create_topic(topic) do
-    retry with: exponential_backoff() |> randomize() |> cap(2_000) |> expiry(30_000), atoms: [false] do
-      Elsa.create_topic(endpoints(), topic)
-      Process.sleep(100)
-      Elsa.topic?(endpoints(), topic)
-    after
-      true -> true
-    else
-      _ -> raise "Topic does not exist, everything is terrible!"
-    end
-  end
-
-  defp start_topic_producer(topic) do
-    {:ok, _pid} =
-      Elsa.Supervisor.start_link(connection: :"#{topic}_producer", endpoints: endpoints(), producer: [topic: topic])
-
-    retry with: constant_backoff(100) |> Stream.take(25) do
-      :brod.get_producer(:"#{topic}_producer", topic, 0)
-    after
-      {:ok, _pid} -> true
-    else
-      _ -> raise "Cannot verify kafka producer for topic #{topic}"
-    end
-  end
-
-  defp endpoints(), do: Application.get_env(:reaper, :elsa_brokers)
-
-  defp topic_prefix(), do: Application.get_env(:reaper, :output_topic_prefix)
 end

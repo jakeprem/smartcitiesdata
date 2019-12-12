@@ -1,1 +1,1 @@
-Mox.defmock(MockTopic, for: Pipeline.Writer)
+Mox.defmock(MockWriter, for: Pipeline.Writer)

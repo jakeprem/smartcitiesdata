@@ -12,6 +12,7 @@ defmodule Reaper.Application do
         libcluster(),
         {Reaper.Horde.Registry, keys: :unique},
         {Reaper.Cache.Registry, keys: :unique},
+        Pipeline.Watcher,
         Reaper.Horde.Supervisor,
         {Reaper.Horde.NodeListener, hordes: [Reaper.Horde.Supervisor, Reaper.Horde.Registry, Reaper.Cache.Registry]},
         redis(),
@@ -24,7 +25,7 @@ defmodule Reaper.Application do
 
     fetch_and_set_hosted_file_credentials()
 
-    opts = [strategy: :one_for_one, name: Reaper.Supervisor]
+    opts = [strategy: :rest_for_one, name: Reaper.Supervisor]
     Supervisor.start_link(children, opts)
   end
 
