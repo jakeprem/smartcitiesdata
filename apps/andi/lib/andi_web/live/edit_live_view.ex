@@ -35,7 +35,7 @@ defmodule AndiWeb.EditLiveView do
             </div>
             <div class="metadata-form__release-date">
               <%= Form.label(fp, :issuedDate, "Release Date", class: "label label--required") %>
-              <%= Form.text_input(fp, :issuedDate, class: "input") %>
+              <%= Form.date_input(fp, :issuedDate, class: "input") %>
               <%= error_tag(fp, :issuedDate) %>
             </div>
             <div class="metadata-form__license">
@@ -55,7 +55,7 @@ defmodule AndiWeb.EditLiveView do
             </div>
             <div class="metadata-form__last-updated">
               <%= Form.label(fp, :modifiedDate, "Last Updated", class: "label") %>
-              <%= Form.text_input(fp, :modifiedDate, class: "input") %>
+              <%= Form.date_input(fp, :modifiedDate, class: "input") %>
             </div>
             <div class="metadata-form__spatial">
               <%= Form.label(fp, :spatial, "Spatial Boundaries", class: "label") %>
@@ -96,6 +96,16 @@ defmodule AndiWeb.EditLiveView do
           <%= Link.button("Cancel", to: "/", method: "get", class: "btn btn--cancel") %>
         </div>
         <div class="metadata-form__save-btn">
+          <%= unless is_nil(@validation_errors) do %>
+            <div class="metadata__error-message">
+              <span>There were errors with the dataset you tried to submit.
+              <ul>
+                <%= for error <- @validation_errors do %>
+                  <li><%= error %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
           <%= Link.button("Next", to: "/", method: "get", id: "next-button", class: "btn btn--next") %>
           <%= Form.submit("Save", id: "save-button", class: "btn btn--save") %>
         </div>
@@ -111,7 +121,7 @@ defmodule AndiWeb.EditLiveView do
 
   def mount(%{dataset: dataset}, socket) do
     {:ok,
-     assign(socket, id: dataset.id, dataset: dataset, changeset: Andi.DatasetSchema.changeset(dataset), is_saved: false)}
+     assign(socket, id: dataset.id, dataset: dataset, changeset: Andi.DatasetSchema.changeset(dataset), is_saved: false, validation_errors: nil)}
   end
 
   def handle_event(
@@ -130,36 +140,38 @@ defmodule AndiWeb.EditLiveView do
         schema = Ecto.Changeset.apply_changes(change)
         original_dataset = socket.assigns.dataset
 
-        %{
-          original_dataset
-          | business: Map.merge(Map.from_struct(original_dataset.business), Map.from_struct(schema.business)),
-            technical: Map.merge(Map.from_struct(original_dataset.technical), Map.from_struct(schema.technical))
-        }
-        |> SmartCity.Dataset.new()
-        |> send_dataset_update
+        with {:ok, dataset} <- rebuild_dataset_struct(original_dataset, schema),
+             :valid <- DatasetValidator.validate(dataset) do
+              dataset |> IO.inspect(label: "edit_live_view.ex:140")
+              Brook.Event.send(instance_name(), dataset_update(), :andi, dataset)
 
-        {:noreply, assign(socket, changeset: change, is_saved: true, update_stepper_state: "meta-data-save")}
+              {:noreply, assign(socket, changeset: change, is_saved: true, update_stepper_state: "meta-data-save")}
+        else
+          {:invalid, errors} ->
+            errors |> IO.inspect(label: "errors")
+
+            {:noreply, assign(socket, changeset: change, is_saved: false, validation_errors: errors)}
+
+          {:error, e} -> Logger.warn("Unable to create new SmartCity.Dataset: #{inspect({:error, e})}")
+        end
 
       false ->
         {:noreply, assign(socket, changeset: change, is_saved: false, display_errors: true)}
     end
   end
 
+  defp rebuild_dataset_struct(original_dataset, schema) do
+    %{
+      original_dataset
+      | business: Map.merge(Map.from_struct(original_dataset.business), Map.from_struct(schema.business)),
+        technical: Map.merge(Map.from_struct(original_dataset.technical), Map.from_struct(schema.technical))
+    } |> SmartCity.Dataset.new()
+  end
+
   defp apply_changes(data) do
     data
     |> put_in(["business", "keywords"], get_keywords_as_list(data["business"]["keywords"]))
     |> Andi.DatasetSchema.changeset()
-  end
-
-  defp send_dataset_update({:ok, dataset}) do
-    case DatasetValidator.validate(dataset) do
-      :valid -> Brook.Event.send(instance_name(), dataset_update(), :andi, dataset)
-      {:invalid, errors} -> Logger.warn("Invalid dataset: #{inspect({:invalid, errors})}")
-    end
-  end
-
-  defp send_dataset_update({:error, e}) do
-    Logger.warn("Unable to create new SmartCity.Dataset: #{inspect({:error, e})}")
   end
 
   defp get_language_options, do: [[key: "English", value: "english"], [key: "Spanish", value: "spanish"]]

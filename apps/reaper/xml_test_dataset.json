@@ -1,0 +1,166 @@
+{
+  "business": {
+    "authorEmail": null,
+    "authorName": null,
+    "categories": null,
+    "conformsToUri": "",
+    "contactEmail": "",
+    "contactName": "N/A",
+    "dataTitle": "Sample XML Dataset - DEV",
+    "describedByMimeType": "",
+    "describedByUrl": "",
+    "description": "Proves that we can ingest XML",
+    "homepage": "https://smartcolumbusos.com/",
+    "issuedDate": "07/26/2019",
+    "keywords": [
+      "xml",
+      "aww yeah"
+    ],
+    "language": "US-English",
+    "license": "http://www.opendefinition.org/licenses/cc-by",
+    "modifiedDate": "2019-07-26T00:00:00Z",
+    "orgTitle": "scos",
+    "parentDataset": "",
+    "publishFrequency": "",
+    "referenceUrls": "",
+    "rights": "",
+    "spatial": "",
+    "temporal": ""
+  },
+  "id": "12345678-7e77-4b1c-92a4-36e09db56173",
+  "technical": {
+    "allow_duplicates": true,
+    "authHeaders": {},
+    "authUrl": null,
+    "cadence": "once",
+    "credentials": false,
+    "dataName": "sample_xml_dataset_dev",
+    "orgId": "962b386d-6406-40f0-8fe0-40caaa15f012",
+    "orgName": "scos",
+    "private": false,
+    "protocol": null,
+    "schema": [
+      {
+        "biased": "No",
+        "demographic": "None",
+        "description": "Location of Camera",
+        "format": "string",
+        "masked": "N/A",
+        "name": "location",
+        "pii": "None",
+        "type": "string",
+        "selector": "./Location/text()"
+      },
+      {
+        "biased": "No",
+        "demographic": "None",
+        "description": "Latitude",
+        "format": "string",
+        "masked": "N/A",
+        "name": "latitude",
+        "pii": "None",
+        "type": "string",
+        "selector": "./Latitude/text()"
+      },
+      {
+        "biased": "No",
+        "demographic": "None",
+        "description": "Longitude",
+        "format": "string",
+        "masked": "N/A",
+        "name": "longitude",
+        "pii": "None",
+        "type": "string",
+        "selector": "./Longitude/text()"
+      },
+      {
+        "biased": "No",
+        "demographic": "None",
+        "description": "Camera Feeds",
+        "format": "string",
+        "masked": "N/A",
+        "name": "camera_feeds",
+        "pii": "None",
+        "type": "list",
+        "itemType": "map",
+        "subSchema": [
+          {
+            "biased": "No",
+            "demographic": "None",
+            "description": "Direction",
+            "format": "string",
+            "masked": "N/A",
+            "name": "direction",
+            "pii": "None",
+            "type": "string",
+            "selector": "./Direction/text()"
+          },
+          {
+            "biased": "No",
+            "demographic": "None",
+            "description": "Camera Type",
+            "format": "string",
+            "masked": "N/A",
+            "name": "camera_type",
+            "pii": "None",
+            "type": "string",
+            "selector": "./Type/text()"
+          },
+          {
+            "biased": "No",
+            "demographic": "None",
+            "description": "Description",
+            "format": "string",
+            "masked": "N/A",
+            "name": "description",
+            "pii": "None",
+            "type": "string",
+            "selector": "./Description/text()"
+          },
+          {
+            "biased": "No",
+            "demographic": "None",
+            "description": "Small image",
+            "format": "string",
+            "masked": "N/A",
+            "name": "small_image",
+            "pii": "None",
+            "type": "string",
+            "selector": "./SmallImage/text()"
+          },
+          {
+            "biased": "No",
+            "demographic": "None",
+            "description": "Large image",
+            "format": "string",
+            "masked": "N/A",
+            "name": "large_image",
+            "pii": "None",
+            "type": "string",
+            "selector": "./LargeImage/text()"
+          },
+          {
+            "biased": "No",
+            "demographic": "None",
+            "description": "Image update interval",
+            "format": "string",
+            "masked": "N/A",
+            "name": "image_update_interval",
+            "pii": "None",
+            "type": "string",
+            "selector": "./ImageUpdateInterval/text()"
+          }
+        ],
+        "selector": "./CameraFeeds/CameraFeed"
+      }
+    ],
+    "sourceFormat": "xml",
+    "sourceHeaders": {},
+    "sourceQueryParams": {},
+    "sourceType": "ingest",
+    "sourceUrl": "http://www.buckeyetraffic.org/services/Cameras.aspx",
+    "systemName": "scos__sample_xml_dataset_dev",
+    "topLevelSelector": "CameraSites/CameraSite"
+  },
+  "version": "0.4"
+}
