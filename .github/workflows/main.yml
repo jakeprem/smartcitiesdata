@@ -16,9 +16,11 @@ jobs:
           runs-on: ubuntu-latest
       # - name: Setup Git
       #   uses: srt32/git-actions@v0.0.3
-      - name: Is Git useable here?
+      - name: Git Stuff
+        id: git
         run: |
-          echo $(git tag)
+          echo "::set-env name=GIT_TAGS::$(git tag)"
+          echo "::set-env name=GIT_FILES::$(git diff --name-status master)"
       - name: Check App versions
         run: echo "::set-output name=pr_message::$(elixir -r differ.exs -e 'Differ.cli')"
         id: differ

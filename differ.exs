@@ -2,18 +2,30 @@ defmodule Differ do
   require Logger
 
   def cli do
-    changed_apps = get_changed_apps()
-    changed_app_versions = get_app_versions(changed_apps)
-    tags = get_tags()
+    git_files = System.get_env("GIT_FILES", "")
+    git_tags = System.get_env("GIT_TAGS", "")
 
-    changed_app_versions
-    |> Enum.filter(&(&1 in tags))
-    |> Enum.map(fn {app, vsn} ->
-      "A tag already exists for #{String.capitalize(app)} version #{
-        Enum.join([vsn.major, vsn.minor, vsn.patch], ".")
-      }. Please update 'apps/#{app}/mix.exs'."
-    end)
-    |> Enum.each(fn x -> IO.puts(x) end)
+    changed_app_versions =
+      git_files
+      |> extract_apps()
+      |> get_app_versions()
+
+    tags = parse_tags(git_tags)
+
+    app_version_messages =
+      changed_app_versions
+      |> Enum.filter(&(&1 in tags))
+      |> Enum.map(fn {app, vsn} ->
+        "A tag already exists for #{String.capitalize(app)} version #{
+          Enum.join([vsn.major, vsn.minor, vsn.patch], ".")
+        }. Please update 'apps/#{app}/mix.exs'."
+      end)
+
+      case app_version_messages do
+        [] -> IO.puts("Did not detect any app version problems")
+        apps -> Enum.each(apps, fn app -> IO.puts(app) end)
+      end
+
   end
 
   def get_changed_apps do
@@ -32,9 +44,8 @@ defmodule Differ do
     Enum.map(apps, &get_app_version/1)
   end
 
-  def get_tags do
-    System.cmd("git", ["tag"])
-    |> elem(0)
+  def parse_tags(raw_tags) do
+    raw_tags
     |> String.split("\n")
     |> Enum.map(&String.split(&1, "@"))
     |> Enum.reject(&(length(&1) != 2))
