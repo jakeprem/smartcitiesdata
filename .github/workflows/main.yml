@@ -19,9 +19,11 @@ jobs:
       - name: Git Stuff
         id: git
         run: |
+          export GITTAGS=$(git tag)
+          export GITFILES=$(git diff --name-status remotes/origin/master)
           git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
-          echo "::set-env name=GIT_TAGS::$(git tag)"
-          echo "::set-env name=GIT_FILES::$(git diff --name-status remotes/origin/master)"
+          echo "::set-env name=GIT_TAGS::$GITTAGS"
+          echo "::set-env name=GIT_FILES::$GITFILES"
       - name: Check App versions
         run: echo "::set-output name=pr_message::$(elixir -r differ.exs -e 'Differ.cli')"
         id: differ
