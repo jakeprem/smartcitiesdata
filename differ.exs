@@ -2,7 +2,8 @@ defmodule Differ do
   require Logger
 
   def cli do
-    changed_app_versions = get_changed_apps() |> IO.inspect(label: "Changed Apps") |> get_app_versions() |> IO.inspect(label: "App Versions")
+    changed_apps = get_changed_apps()
+    changed_app_versions = get_app_versions(changed_apps)
     tags = get_tags()
 
     changed_app_versions
