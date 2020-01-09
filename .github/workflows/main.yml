@@ -17,7 +17,9 @@ jobs:
         id: git
         run: |
           export GITTAGS=$(git tag)
+          echo $GITTAGS
           export GITFILES=$(git diff --name-status remotes/origin/master)
+          echo $GITFILES
           git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
           echo "::set-env name=GIT_TAGS::$GITTAGS"
           echo "::set-env name=GIT_FILES::$GITFILES"
