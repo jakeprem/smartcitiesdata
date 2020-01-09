@@ -3,8 +3,11 @@ defmodule Differ do
 
   def cli do
     changed_apps = get_changed_apps()
+    Logger.warn("Changed Apps: #{inspect(changed_apps)}")
     changed_app_versions = get_app_versions(changed_apps)
+    Logger.warn("Changed App Versions: #{inspect(changed_app_versions)}")
     tags = get_tags()
+    Logger.warn("Tags: #{inspect(tags)}")
 
     changed_app_versions
     |> Enum.filter(&(&1 in tags))
@@ -25,8 +28,7 @@ defmodule Differ do
   end
 
   def get_app_versions(apps) do
-    Logger.warn(inspect(apps))
-    Application.ensure_all_started(:mix) |> inspect() |> Logger.warn()
+    Application.ensure_all_started(:mix) |> inspect()
 
     Enum.map(apps, &get_app_version/1)
   end
