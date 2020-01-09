@@ -14,6 +14,8 @@ jobs:
           elixir-version: 1.9
           otp-version: 22.2
           runs-on: ubuntu-latest
+      - name: Setup Git
+        uses: srt32/git-actions@v0.0.3
       - name: Check App versions
         run: echo "::set-output name=pr_message::$(elixir -r differ.exs -e 'Differ.cli')"
         id: differ
