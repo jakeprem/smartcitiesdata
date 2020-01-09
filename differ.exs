@@ -3,11 +3,8 @@ defmodule Differ do
 
   def cli do
     changed_apps = get_changed_apps()
-    Logger.warn("Changed Apps: #{inspect(changed_apps)}")
     changed_app_versions = get_app_versions(changed_apps)
-    Logger.warn("Changed App Versions: #{inspect(changed_app_versions)}")
     tags = get_tags()
-    Logger.warn("Tags: #{inspect(tags)}")
 
     changed_app_versions
     |> Enum.filter(&(&1 in tags))
@@ -23,7 +20,9 @@ defmodule Differ do
     with {raw, 0} <- get_raw_file_diff() do
       extract_apps(raw)
     else
-      error -> Logger.error(inspect(error))
+      error ->
+        Logger.error("Error getting file diff: #{inspect(error)}")
+        []
     end
   end
 
