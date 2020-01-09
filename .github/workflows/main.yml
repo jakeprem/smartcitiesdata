@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - name: Setup Elixir
         uses: actions/setup-elixir@v1.2.0
         with:
@@ -19,7 +19,6 @@ jobs:
       - name: Git Stuff
         id: git
         run: |
-          git fetch master
           echo $(git tag)
           echo "Branches: $(git branch -a)"
           echo "::set-env name=GIT_TAGS::$(git tag)"
