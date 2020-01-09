@@ -21,13 +21,13 @@ defmodule Differ do
       extract_apps(raw)
     else
       error ->
-        Logger.error("Error getting file diff: #{inspect(error)}")
+        Logger.error("Error getting file diff: (#{inspect(error)})")
         []
     end
   end
 
   def get_app_versions(apps) do
-    Application.ensure_all_started(:mix) |> inspect()
+    Application.ensure_all_started(:mix)
 
     Enum.map(apps, &get_app_version/1)
   end
