@@ -24,9 +24,10 @@ jobs:
       - name: Check App versions
         run: echo "::set-output name=pr_message::$(elixir -r differ.exs -e 'Differ.cli')"
         id: differ
+      - name: Check Message
+        run: echo ${{ steps.differ.outputs.message }}
       - name: Comment PR
         uses: marocchino/sticky-pull-request-comment@v1
-        run: echo ${{ steps.differ.outputs.message }}
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           message: |

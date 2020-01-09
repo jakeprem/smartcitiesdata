@@ -1,6 +1,7 @@
 defmodule Reaper.MixProject do
   use Mix.Project
 # hello there
+# this should trigger the mesage
   def project do
     [
       app: :reaper,
