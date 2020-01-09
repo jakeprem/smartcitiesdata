@@ -20,7 +20,7 @@ jobs:
         id: git
         run: |
           echo $(git tag)
-          echo $(git branch)
+          echo "Branches: $(git branch)""
           echo "::set-env name=GIT_TAGS::$(git tag)"
           echo "::set-env name=GIT_FILES::$(git diff --name-status master)"
       - name: Check App versions
