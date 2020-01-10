@@ -17,10 +17,10 @@ defmodule Differ do
 
     case app_version_messages do
       [] ->
-        Logger.warn("Did not detect any app version problems")
+        IO.puts("Did not detect any app version problems")
 
       apps ->
-        Enum.each(apps, fn app -> Logger.warn(app) end)
+        Enum.each(apps, fn app -> IO.puts(app) end)
     end
   end
 
