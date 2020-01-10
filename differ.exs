@@ -9,14 +9,22 @@ defmodule Differ do
     tags = get_tags()
     System.cmd("echo", ["Tags: #{inspect(tags)}"])
 
-    changed_app_versions
-    |> Enum.filter(&(&1 in tags))
-    |> Enum.map(fn {app, vsn} ->
-      "A tag already exists for #{String.capitalize(app)} version #{
-        Enum.join([vsn.major, vsn.minor, vsn.patch], ".")
-      }. Please update 'apps/#{app}/mix.exs'."
-    end)
-    |> Enum.each(fn x -> IO.puts(x) end)
+    app_version_messages =
+      changed_app_versions
+      |> Enum.filter(&(&1 in tags))
+      |> Enum.map(fn {app, vsn} ->
+        "A tag already exists for #{String.capitalize(app)} version #{
+          Enum.join([vsn.major, vsn.minor, vsn.patch], ".")
+        }. Please update 'apps/#{app}/mix.exs'."
+      end)
+
+    case app_version_messages do
+      [] ->
+        Logger.warn("Did not detect any app version problems")
+
+      apps ->
+        Enum.each(apps, fn app -> Logger.warn(app) end)
+    end
   end
 
   def get_changed_apps do
@@ -56,7 +64,7 @@ defmodule Differ do
   end
 
   defp get_raw_file_diff do
-    System.cmd("git", ["diff", "--name-status", "master"])
+    System.cmd("git", ["diff", "--name-status", "origin/master"])
   end
 
   defp extract_apps(raw) do
