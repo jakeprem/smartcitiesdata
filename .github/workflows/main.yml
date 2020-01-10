@@ -27,14 +27,12 @@ jobs:
         shell: bash
         id: test_new
         run: |
-          export description="this is line one\n
-                  this is line two\n
-                  this is line three\n"
-          echo "$description"
-          export description="${description//'%'/'%25'}"
-          export description="${description//$'\n'/'%0A'}"
-          export description="${description//$'\r'/'%0D'}" 
-          echo "::set-output name=description::$description"
+          export DESCRIPTION="this is line one\nthis is line two\nthis is line three\n"
+          echo $DESCRIPTION
+          export DESCRIPTION="${DESCRIPTION//'%'/'%25'}"
+          export DESCRIPTION="${DESCRIPTION//$'\n'/'%0A'}"
+          export DESCRIPTION="${DESCRIPTION//$'\r'/'%0D'}" 
+          echo "::set-output name=description::$DESCRIPTION"
       - name: Check New Lines
         run: echo ${{ steps.test_new.outputs.description }}
       - name: Check Message
