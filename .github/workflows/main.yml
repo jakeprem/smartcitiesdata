@@ -28,4 +28,4 @@ jobs:
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           message: |
-            ${{ steps.differ.outputs.pr_message }}
+            A\nB\nC\nD\n
