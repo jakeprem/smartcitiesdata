@@ -21,8 +21,22 @@ jobs:
       - name: Check App versions
         run: |
           export MESSAGE="$(elixir -r differ.exs -e 'Differ.cli')"
-          echo ::set-output name=pr_message::"$MESSAGE"
+          echo "::set-output name=pr_message::$MESSAGE"
         id: differ
+      - name: Test New lines
+        shell: bash
+        id: test_new
+        run: |
+          description="this is line one\n
+                  this is line two\n
+                  this is line three\n"
+          echo $description
+          description="${description//'%'/'%25'}"
+          description="${description//$'\n'/'%0A'}"
+          description="${description//$'\r'/'%0D'}" 
+          echo "::set-output name=description::$description"
+      - name: Check New Lines
+        run: echo ${{ steps.test_new.outputs.description }}
       - name: Check Message
         run: echo ${{ steps.differ.outputs.pr_message }}
       - name: Comment PR
