@@ -20,7 +20,7 @@ defmodule Differ do
         IO.puts("Did not detect any app version problems")
 
       apps ->
-        Enum.each(apps, fn app -> IO.puts(app) end)
+        Enum.each(apps, fn app -> IO.puts("#{app}\n") end)
     end
   end
 
