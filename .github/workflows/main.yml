@@ -27,5 +27,4 @@ jobs:
         uses: marocchino/sticky-pull-request-comment@v1
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          message: |
-            A\nB\nC\nD\n
+          message: ${{ steps.differ.outputs.pr_message }}
