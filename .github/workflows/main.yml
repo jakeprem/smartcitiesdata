@@ -19,7 +19,11 @@ jobs:
           git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/* 
           git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - name: Check App versions
-        run: echo $(elixir -r differ.exs -e 'Differ.cli')
+        run: |
+          export MESSAGE=$(elixir -r differ.exs -e 'Differ.cli')
+          echo "--------------"
+          echo $MESSAGE
+          echo "--------------"
         id: differ
       - name: Check Message
         run: echo ${{ steps.differ.outputs.message }}
