@@ -21,7 +21,7 @@ jobs:
       - name: Check App versions
         run: |
           export MESSAGE="$(elixir -r differ.exs -e 'Differ.cli')"
-          echo "::set-output name=pr_message::$MESSAGE"
+          echo ::set-output name=pr_message::"$MESSAGE"
         id: differ
       - name: Check Message
         run: echo ${{ steps.differ.outputs.pr_message }}
