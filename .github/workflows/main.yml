@@ -20,25 +20,12 @@ jobs:
           git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - name: Check App versions
         run: |
-          export MESSAGE="$(elixir -r differ.exs -e 'Differ.cli')"
-          echo "::set-output name=pr_message::$MESSAGE"
+          export MESSAGE=$(elixir -r differ.exs -e 'Differ.cli')
+          echo ::set-output name=pr_message::$MESSAGE
         id: differ
-      - name: Test New lines
-        shell: bash
-        id: test_new
-        run: |
-          export DESCRIPTION="this is line one\nthis is line two\nthis is line three\n"
-          echo $DESCRIPTION
-          export DESCRIPTION="${DESCRIPTION//'%'/'%25'}"
-          export DESCRIPTION="${DESCRIPTION//$'\n'/'%0A'}"
-          export DESCRIPTION="${DESCRIPTION//$'\r'/'%0D'}" 
-          echo "::set-output name=description::$DESCRIPTION"
-      - name: Check New Lines
-        run: echo "${{ steps.test_new.outputs.description }}"
-      - name: Check Message
-        run: echo ${{ steps.differ.outputs.pr_message }}
       - name: Comment PR
         uses: marocchino/sticky-pull-request-comment@v1
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          message: ${{ steps.test_new.outputs.description }}
+          message: |
+            ${{ steps.differ.outputs.pr_message }}
