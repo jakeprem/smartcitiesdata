@@ -30,7 +30,7 @@ jobs:
           export description="this is line one\n
                   this is line two\n
                   this is line three\n"
-          echo $description
+          echo "$description"
           export description="${description//'%'/'%25'}"
           export description="${description//$'\n'/'%0A'}"
           export description="${description//$'\r'/'%0D'}" 
