@@ -2,33 +2,21 @@ defmodule Differ do
   require Logger
 
   def cli do
-    git_files = System.get_env("GIT_FILES", "")
-    git_tags = System.get_env("GIT_TAGS", "")
+    changed_apps = get_changed_apps()
+    System.cmd("echo", ["Changed Apps: #{inspect(changed_apps)}"])
+    changed_app_versions = get_app_versions(changed_apps)
+    System.cmd("echo", ["Changed App Versions: #{inspect(changed_app_versions)}"])
+    tags = get_tags()
+    System.cmd("echo", ["Tags: #{inspect(tags)}"])
 
-    changed_app_versions =
-      git_files
-      |> extract_apps()
-      |> get_app_versions()
-
-    tags = parse_tags(git_tags)
-
-    app_version_messages =
-      changed_app_versions
-      |> Enum.filter(&(&1 in tags))
-      |> Enum.map(fn {app, vsn} ->
-        "A tag already exists for #{String.capitalize(app)} version #{
-          Enum.join([vsn.major, vsn.minor, vsn.patch], ".")
-        }. Please update 'apps/#{app}/mix.exs'."
-      end)
-
-      case app_version_messages do
-        [] ->
-          Logger.warn("Did not detect any app version problems")
-        apps ->
-          Enum.each(apps, fn app -> Logger.warn(app) end)
-      end
-
-
+    changed_app_versions
+    |> Enum.filter(&(&1 in tags))
+    |> Enum.map(fn {app, vsn} ->
+      "A tag already exists for #{String.capitalize(app)} version #{
+        Enum.join([vsn.major, vsn.minor, vsn.patch], ".")
+      }. Please update 'apps/#{app}/mix.exs'."
+    end)
+    |> Enum.each(fn x -> IO.puts(x) end)
   end
 
   def get_changed_apps do
