@@ -35,12 +35,16 @@ defmodule Differ do
     Enum.map(apps, &get_app_version/1)
   end
 
-  def parse_tags(raw_tags) do
-    raw_tags
-    |> String.split("\n")
-    |> Enum.map(&String.split(&1, "@"))
-    |> Enum.reject(&(length(&1) != 2))
-    |> Enum.map(fn [app, vsn] -> {app, Version.parse!(vsn)} end)
+  def get_tags do
+    with {tags, 0} <- System.cmd("git", ["tag"]) do
+      tags
+      |> String.split("\n")
+      |> Enum.map(&String.split(&1, "@"))
+      |> Enum.reject(&(length(&1) != 2))
+      |> Enum.map(fn [app, vsn] -> {app, Version.parse!(vsn)} end)
+    else
+      {result, code} -> raise inspect({result, code})
+    end
   end
 
   defp get_app_version(app) do
