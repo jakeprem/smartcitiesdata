@@ -9,19 +9,21 @@ defmodule Differ do
     app_version_messages =
       changed_app_versions
       |> Enum.filter(&(&1 in tags))
-      |> Enum.map(fn {app, vsn} ->
-        "A tag already exists for #{String.capitalize(app)} version #{
-          Enum.join([vsn.major, vsn.minor, vsn.patch], ".")
-        }. Please update 'apps/#{app}/mix.exs'."
-      end)
+      |> Enum.map(&format_app/1)
 
     case app_version_messages do
       [] ->
         IO.puts("Did not detect any app version problems")
 
       apps ->
-        Enum.each(apps, fn app -> IO.puts("#{app}\n") end)
+        IO.puts("Tags already exist for #{Enum.join(apps, ", ")}. Please update each `apps/${app}/mix.exs` with a new version.")
     end
+  end
+
+  defp format_app({app, vsn}) do
+    "`#{String.capitalize(app)} #{
+      Enum.join([vsn.major, vsn.minor, vsn.patch], ".")
+    }`"
   end
 
   def get_changed_apps do
