@@ -23,8 +23,10 @@ jobs:
           export MESSAGE=$(elixir -r differ.exs -e 'Differ.cli')
           echo ::set-output name=pr_message::$MESSAGE
         id: differ
+      - name: Check Message
+        run: echo ${{ steps.differ.outputs.pr_message }}
       - name: Comment PR
         uses: marocchino/sticky-pull-request-comment@v1
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          message: "${{ steps.differ.outputs.pr_message }}"
+          message: ${{ steps.differ.outputs.pr_message }}
