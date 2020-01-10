@@ -24,12 +24,13 @@ jobs:
           echo "--------------"
           echo $MESSAGE
           echo "--------------"
+          echo ::set-output name=pr_message::$MESSAGE
         id: differ
       - name: Check Message
-        run: echo ${{ steps.differ.outputs.message }}
+        run: echo ${{ steps.differ.outputs.pr_message }}
       - name: Comment PR
         uses: marocchino/sticky-pull-request-comment@v1
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           message: |
-            ${{ steps.differ.outputs.message }}
+            ${{ steps.differ.outputs.pr_message }}
