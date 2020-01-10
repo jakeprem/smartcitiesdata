@@ -20,11 +20,11 @@ jobs:
           git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - name: Check App versions
         run: |
-          MESSAGE=$(elixir -r differ.exs -e 'Differ.cli')
-          MESSAGE="${MESSAGE//'%'/'%25'}"
-          MESSAGE="${MESSAGE//$'\n'/'%0A'}"
-          MESSAGE="${MESSAGE//$'\r'/'%0D'}"
-          echo "::set-output name=pr_message::$MESSAGE"
+          message=$(elixir -r differ.exs -e 'Differ.cli')
+          message="${message//'%'/'%25'}"
+          message="${message//$'\n'/'%0A'}"
+          message="${message//$'\r'/'%0D'}"
+          echo "::set-output name=pr_message::$message"
         id: differ
       - name: Check Message
         run: echo ${{ steps.differ.outputs.pr_message }}
