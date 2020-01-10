@@ -34,7 +34,7 @@ jobs:
           export DESCRIPTION="${DESCRIPTION//$'\r'/'%0D'}" 
           echo "::set-output name=description::$DESCRIPTION"
       - name: Check New Lines
-        run: echo ${{ steps.test_new.outputs.description }}
+        run: echo "${{ steps.test_new.outputs.description }}"
       - name: Check Message
         run: echo ${{ steps.differ.outputs.pr_message }}
       - name: Comment PR
