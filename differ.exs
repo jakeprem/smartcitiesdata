@@ -3,11 +3,11 @@ defmodule Differ do
 
   def cli do
     changed_apps = get_changed_apps()
-    System.cmd("echo", ["Changed Apps: #{inspect(changed_apps)}"])
+    Logger.warn("Changed apps: #{changed_apps}")
     changed_app_versions = get_app_versions(changed_apps)
-    System.cmd("echo", ["Changed App Versions: #{inspect(changed_app_versions)}"])
+    Logger.warn("Changed versions: #{changed_app_versions}")
     tags = get_tags()
-    System.cmd("echo", ["Tags: #{inspect(tags)}"])
+    Logger.warn("Tags: #{tags}")
 
     app_version_messages =
       changed_app_versions
